@@ -20,6 +20,7 @@ import pandas as pd
 from pydantic import BaseModel, Field
 import streamlit as st
 
+from core.errors import MissingInputError
 from core.config_loader import (
     load_assumptions,
     load_rules,
@@ -52,34 +53,82 @@ logger = logging.getLogger(__name__)
 
 
 class ScenarioInputs(BaseModel):
-    """Pydantic model representing user-defined scenario inputs for a feeder."""
+    """Pydantic model representing user-defined scenario inputs for a feeder.
 
-    substation: str = Field(default="33/11 kV Bhatangali")
-    feeder_name: str = Field(default="11KV BHATANGALI")
-    crop_mix_ha: Dict[str, float] = Field(
-        default_factory=lambda: {
+    Per PROJECT_SPEC and input honesty rules:
+    - No silent defaults for crop mix, irrigation methods, pump kW, battery MWh, land or distance.
+    - candidate_solar_mwp is pre-filled strictly from feeder_schedule.csv solar_plant_mw.
+    - All scenario numbers are user-supplied or explicitly loaded illustrative scenario assumptions.
+    """
+
+    substation: Optional[str] = None
+    feeder_name: Optional[str] = None
+    crop_mix_source: str = "manual"  # 'manual' or 'district_proxy'
+    command_area_ha: Optional[float] = None
+    crop_mix_ha: Dict[str, float] = Field(default_factory=dict)
+    irrigation_methods: Dict[str, str] = Field(default_factory=dict)
+    connected_pump_kw: Optional[float] = None
+    candidate_solar_mwp: Optional[float] = None
+    candidate_battery_mwh: Optional[float] = None
+    target_solar_share: Optional[float] = None
+    available_land_acres: Optional[float] = None
+    distance_to_substation_km: Optional[float] = None
+    plant_lat: Optional[float] = None
+    plant_lon: Optional[float] = None
+    substation_lat: Optional[float] = None
+    substation_lon: Optional[float] = None
+    budget_inr: Optional[float] = None
+    is_illustrative: bool = False
+
+
+def get_illustrative_scenario_inputs() -> ScenarioInputs:
+    """Return an illustrative scenario clearly tagged as not measured feeder data."""
+    return ScenarioInputs(
+        substation="33/11 kV Bhatangali",
+        feeder_name="11KV BHATANGALI",
+        crop_mix_source="manual",
+        command_area_ha=275.0,
+        crop_mix_ha={
             "Soybean": 120.0,
             "Gram": 80.0,
             "Sugarcane": 25.0,
             "Tur": 30.0,
             "Wheat": 20.0,
-        }
-    )
-    irrigation_methods: Dict[str, str] = Field(
-        default_factory=lambda: {
+        },
+        irrigation_methods={
             "Soybean": "sprinkler",
             "Gram": "drip",
             "Sugarcane": "drip",
             "Tur": "flood",
             "Wheat": "sprinkler",
-        }
+        },
+        connected_pump_kw=1200.0,
+        candidate_solar_mwp=2.5,
+        candidate_battery_mwh=2.0,
+        target_solar_share=0.70,
+        available_land_acres=15.0,
+        distance_to_substation_km=1.8,
+        plant_lat=18.3950,
+        plant_lon=76.5520,
+        substation_lat=18.3800,
+        substation_lon=76.5400,
+        budget_inr=150000000.0,
+        is_illustrative=True,
     )
-    connected_pump_kw: float = Field(default=1200.0, ge=10.0, le=20000.0)
-    candidate_solar_mwp: float = Field(default=2.5, ge=0.1, le=50.0)
-    candidate_battery_mwh: float = Field(default=2.0, ge=0.0, le=50.0)
-    target_solar_share: float = Field(default=0.70, ge=0.1, le=1.0)
-    available_land_acres: float = Field(default=15.0, ge=0.5, le=500.0)
-    distance_to_substation_km: float = Field(default=1.8, ge=0.1, le=50.0)
+
+
+def render_scenario_banner(is_illustrative: bool = False) -> None:
+    """Render mandatory scenario input provenance banner across Pages 1 to 5."""
+    if is_illustrative:
+        st.warning(
+            "⚠️ **ILLUSTRATIVE SCENARIO:** Scenario inputs are illustrative assumptions loaded for demonstration, "
+            "not measured feeder data."
+        )
+    else:
+        st.info(
+            "ℹ️ **NOTICE:** Scenario inputs are user-supplied, not measured feeder data."
+        )
+
 
 
 def compute_file_sha256(filepath: Path) -> str:
@@ -151,7 +200,20 @@ def get_dataset_provenance() -> List[Dict[str, Any]]:
 def get_scenario_inputs() -> ScenarioInputs:
     """Retrieve or initialize ScenarioInputs from Streamlit session state."""
     if "scenario_inputs" not in st.session_state:
-        st.session_state.scenario_inputs = ScenarioInputs()
+        # Pre-fill candidate_solar_mwp strictly from feeder_schedule.csv solar_plant_mw
+        schedule_df = get_cached_feeder_schedule()
+        default_sub = str(schedule_df.iloc[0]["substation"]) if not schedule_df.empty else "33/11 kV Bhatangali"
+        default_feeder = str(schedule_df.iloc[0]["feeder_name"]) if not schedule_df.empty else "11KV BHATANGALI"
+        default_solar_mw = float(schedule_df.iloc[0]["solar_plant_mw"]) if not schedule_df.empty else 2.5
+        st.session_state.scenario_inputs = ScenarioInputs(
+            substation=default_sub,
+            feeder_name=default_feeder,
+            candidate_solar_mwp=default_solar_mw,
+            target_solar_share=0.70,
+            substation_lat=18.3800,
+            substation_lon=76.5400,
+            is_illustrative=False,
+        )
     return st.session_state.scenario_inputs
 
 
@@ -164,11 +226,22 @@ def save_scenario_inputs(inputs: ScenarioInputs) -> None:
 def run_cached_demand(
     crop_mix_tuple: Tuple[Tuple[str, float], ...],
     irrigation_methods_tuple: Tuple[Tuple[str, str], ...],
-    connected_pump_kw: float,
+    connected_pump_kw: Optional[float],
     window_start: str,
     window_end: str,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Calculate daily water requirement and 8,784h pump electrical demand profile."""
+    if not crop_mix_tuple or sum(v for _, v in crop_mix_tuple) <= 0:
+        raise MissingInputError(
+            "crop_mix_ha",
+            "Crop mix hectares not configured. Please enter crop areas on Page 1 or click 'Load illustrative scenario'.",
+        )
+    if connected_pump_kw is None or connected_pump_kw <= 0:
+        raise MissingInputError(
+            "connected_pump_kw",
+            "Connected pump electrical capacity (kW) not configured. Please enter connected pump capacity on Page 1 or click 'Load illustrative scenario'.",
+        )
+
     weather_df = get_cached_weather()
     crop_params_df = get_cached_crop_params()
     crop_mix = dict(crop_mix_tuple)
@@ -200,8 +273,13 @@ def run_cached_demand(
 
 
 @st.cache_data
-def run_cached_solar(solar_capacity_mwp: float) -> pd.DataFrame:
+def run_cached_solar(solar_capacity_mwp: Optional[float]) -> pd.DataFrame:
     """Simulate 8,784h solar generation profile with pvlib."""
+    if solar_capacity_mwp is None or solar_capacity_mwp <= 0:
+        raise MissingInputError(
+            "candidate_solar_mwp",
+            "Candidate solar capacity (MWp) is missing. Please configure it on Page 1.",
+        )
     weather_df = get_cached_weather()
     return simulate_pv_generation(
         weather_df=weather_df,
@@ -211,17 +289,20 @@ def run_cached_solar(solar_capacity_mwp: float) -> pd.DataFrame:
 
 @st.cache_data
 def run_cached_dispatch(
-    solar_capacity_mwp: float,
-    battery_capacity_mwh: float,
+    solar_capacity_mwp: Optional[float],
+    battery_capacity_mwh: Optional[float],
     demand_hash_key: str,
     solar_series: pd.Series,
     demand_series: pd.Series,
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """Simulate hourly dispatch and calculate key metrics."""
+    if solar_capacity_mwp is None or solar_capacity_mwp <= 0:
+        raise MissingInputError("candidate_solar_mwp", "Candidate solar capacity (MWp) is missing.")
+    batt_mwh = 0.0 if battery_capacity_mwh is None else battery_capacity_mwh
     return simulate_hourly_dispatch(
         solar_generation_kwh=solar_series,
         pump_demand_kwh=demand_series,
-        battery_capacity_mwh=battery_capacity_mwh,
+        battery_capacity_mwh=batt_mwh,
     )
 
 

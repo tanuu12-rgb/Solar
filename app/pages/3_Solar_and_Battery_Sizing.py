@@ -28,6 +28,7 @@ from app.state import (
     run_cached_solar,
     run_cached_dispatch,
     render_disclaimer_footer,
+    render_scenario_banner,
 )
 from core.solar.pv_model import validate_plant_yield_and_cuf, analyze_feeder_window_coverage
 from core.solar.optimizer import run_capacity_optimization_sweep
@@ -37,6 +38,9 @@ from core.emissions import calculate_avoided_emissions
 st.set_page_config(page_title="Solar & Battery Sizing - Feeder Solar DSS", page_icon="⚡", layout="wide")
 
 try:
+    inputs = get_scenario_inputs()
+    render_scenario_banner(inputs.is_illustrative)
+
     st.title("⚡ Page 3: Solar PV & Battery Storage (BESS) Sizing")
     st.markdown(
         """
@@ -199,7 +203,8 @@ try:
     st.markdown("---")
 
     # --- SECTION 3: CUF & Commissioned Plant Evaluation ---
-    st.subheader("3. CUF Benchmark & Commissioned Plant (2.5 MW) Evaluation")
+    comm_mw = float(feeder_row["solar_plant_mw"])
+    st.subheader(f"3. CUF Benchmark & Commissioned Plant ({comm_mw:.1f} MWp) Evaluation")
 
     cuf_card = validate_plant_yield_and_cuf(solar_df, solar_capacity_mwp=inputs.candidate_solar_mwp)
 
@@ -216,7 +221,7 @@ try:
             st.warning(f"⚠️ {cuf_card['message']}")
 
     with cuf_col2:
-        st.markdown("##### 🏭 Existing Commissioned Plant (2.5 MW) Status")
+        st.markdown(f"##### 🏭 Existing Commissioned Plant ({comm_mw:.1f} MWp) Status")
         comm_mw = float(feeder_row["solar_plant_mw"])
         st.write(f"- **Commissioned Capacity:** {comm_mw:.1f} MWp")
         st.write(f"- **Feeder Window:** {feeder_row['window_start']} - {feeder_row['window_end']}")

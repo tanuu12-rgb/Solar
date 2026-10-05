@@ -192,3 +192,74 @@ def load_crop_parameters(path: Optional[Path] = None) -> pd.DataFrame:
     df = df.set_index("crop", drop=False)
     return df
 
+
+def load_district_proxy_crop_shares(
+    path: Optional[Path] = None,
+) -> pd.Series:
+    """Derive district-level irrigated crop-mix percentage shares from 2011-12 Latur data.
+
+    Tagged SOURCED (district level, 2011-12, proxy for feeder, not measured feeder data).
+    Handles Ahmadpur (TALUKA_ID 4228) duplicate row explicitly.
+    Returns Series with crop names and fraction shares summing to 1.0.
+    """
+    import zipfile
+    import xml.etree.ElementTree as ET
+
+    extracted_path = get_project_root() / "data" / "raw" / "extracted" / "2011-12_Irrigation_Area_Latur.xml"
+    zip_path = path or (get_default_data_dir() / "2011-12_Irrigation_Area_Latur.zip")
+
+    if extracted_path.exists():
+        tree = ET.parse(extracted_path)
+        root = tree.getroot()
+    elif zip_path.exists():
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            content = zf.read("2011-12_Irrigation_Area_Latur.xml")
+        root = ET.fromstring(content)
+    else:
+        raise MissingInputError(
+            "2011-12_Irrigation_Area_Latur",
+            f"Neither extracted XML ({extracted_path}) nor ZIP ({zip_path}) found",
+        )
+
+    records = [{sub.tag: (sub.text.strip() if sub.text else "") for sub in child} for child in root]
+    df = pd.DataFrame(records)
+
+    # Deduplicate Ahmadpur (TALUKA_ID 4228)
+    if "TALUKA_ID" in df.columns:
+        df = df.drop_duplicates(subset=["TALUKA_ID"]).copy()
+
+    crops_map = {
+        "Soybean": "SOYABEAN_AR_UNDER_IRR",
+        "Gram": "GRAM_AR_UNDER_IRR",
+        "Sugarcane": "SUGARCANE_AR_UNDER_IRR",
+        "Tur": "TUR_AR_UNDER_IRR",
+        "Wheat": "WHEAT_AR_UNDER_IRR",
+    }
+
+    totals = {}
+    for crop, col in crops_map.items():
+        if col in df.columns:
+            series = pd.to_numeric(df[col].replace(".", None), errors="coerce").fillna(0.0)
+            totals[crop] = float(series.sum())
+        else:
+            totals[crop] = 0.0
+
+    total_sum = sum(totals.values())
+    if total_sum <= 0:
+        raise DataValidationError("Total irrigated area across 5 proxy crops is zero or invalid")
+
+    shares = {crop: round(totals[crop] / total_sum, 4) for crop in totals}
+    return pd.Series(shares, name="district_proxy_share")
+
+
+def calculate_district_proxy_crop_mix(
+    command_area_ha: float,
+    path: Optional[Path] = None,
+) -> dict[str, float]:
+    """Calculate feeder crop hectares by scaling district-level shares to user-entered command area."""
+    if command_area_ha <= 0:
+        raise ValueError("Total command area must be positive")
+    shares = load_district_proxy_crop_shares(path)
+    return {crop: round(float(share * command_area_ha), 1) for crop, share in shares.items()}
+
+

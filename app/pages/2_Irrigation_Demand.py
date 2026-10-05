@@ -27,12 +27,16 @@ from app.state import (
     get_cached_crop_params,
     run_cached_demand,
     render_disclaimer_footer,
+    render_scenario_banner,
 )
 from core.demand.crop_water import calculate_fao56_daily_kc
 
 st.set_page_config(page_title="Irrigation Demand - Feeder Solar DSS", page_icon="💧", layout="wide")
 
 try:
+    inputs = get_scenario_inputs()
+    render_scenario_banner(inputs.is_illustrative)
+
     st.title("💧 Page 2: Agricultural Irrigation Energy Demand")
     st.markdown(
         """

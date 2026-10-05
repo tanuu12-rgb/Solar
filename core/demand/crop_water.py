@@ -41,10 +41,21 @@ def calculate_fao56_kc_curve(
 
     kc_array = np.zeros(len(doy), dtype=float)
 
+    days_in_year = 366 if pd.Timestamp(year=year, month=12, day=31).dayofyear == 366 else 365
+    crosses_year = (plant_doy + total_season) > days_in_year
+
     for i, d in enumerate(doy):
-        # Day of crop cycle (1-indexed from planting date)
-        # Handle crop cycles that might wrap or stay within year
-        growth_day = d - plant_doy
+        # Handle crop cycles that wrap across calendar year boundary (e.g. Rabi crops)
+        if crosses_year:
+            if d >= plant_doy:
+                growth_day = d - plant_doy
+            elif d < (plant_doy + total_season - days_in_year):
+                growth_day = d + days_in_year - plant_doy
+            else:
+                growth_day = -1
+        else:
+            growth_day = d - plant_doy
+
         if 0 <= growth_day < total_season:
             if growth_day < l_ini:
                 kc = kc_ini

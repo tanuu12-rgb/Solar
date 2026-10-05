@@ -115,6 +115,14 @@ irrigation_efficiency_surface:
   type: "assumption"
   notes: "Field water application efficiency for surface and flood irrigation. Source: FAO-56, ICAR agronomy guidelines, or agricultural university publications."
 
+crop_calendar_boundary_convention:
+  value: "wrap_around"
+  unit: "dimensionless"
+  source: "FAO-56 Irrigation and Drainage Paper 56 Section 6 (Continuous multi-season crop modeling convention for winter Rabi crops crossing December 31 calendar boundary)"
+  type: "assumption"
+  notes: "Handling convention for crop growth cycles crossing the December 31 calendar year boundary: 'wrap_around' models continuous growth from December into January-March of the annual weather series. Source: FAO-56 crop calendar methodology."
+
+
 groundwater_depth_m:
   value: 18.5
   unit: "m"

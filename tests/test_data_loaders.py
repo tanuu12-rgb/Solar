@@ -1,6 +1,7 @@
 """Unit tests for data loading and data validation modules."""
 
 import pytest
+import numpy as np
 import pandas as pd
 
 from core.data.loaders import (
@@ -96,3 +97,23 @@ def test_weather_validator_raises_on_invalid_bounds() -> None:
 
     with pytest.raises(DataValidationError):
         validate_weather_dataset(df)
+
+
+def test_load_district_proxy_crop_shares() -> None:
+    """Verify district-level crop shares loader from 2011-12 Latur data."""
+    from core.data.loaders import load_district_proxy_crop_shares, calculate_district_proxy_crop_mix
+
+    shares = load_district_proxy_crop_shares()
+    assert isinstance(shares, pd.Series)
+    assert len(shares) == 5
+    assert np.isclose(shares.sum(), 1.0, atol=1e-2)
+
+    # Sugarcane should be largest irrigated crop in 2011-12 Latur data (~46%)
+    assert shares["Sugarcane"] > 0.40
+
+    # Scale to 200 ha command area
+    crop_mix = calculate_district_proxy_crop_mix(200.0)
+    assert isinstance(crop_mix, dict)
+    assert len(crop_mix) == 5
+    assert np.isclose(sum(crop_mix.values()), 200.0, atol=1.0)
+

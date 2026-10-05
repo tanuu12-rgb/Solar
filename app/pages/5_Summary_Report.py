@@ -27,6 +27,7 @@ from app.state import (
     run_cached_solar,
     run_cached_dispatch,
     render_disclaimer_footer,
+    render_scenario_banner,
 )
 from core.feasibility.rules_engine import evaluate_feasibility_rules
 from core.feasibility.explanations import generate_feasibility_verdict
@@ -35,6 +36,9 @@ from core.config_loader import get_assumption_value
 st.set_page_config(page_title="Executive Summary - Feeder Solar DSS", page_icon="📄", layout="wide")
 
 try:
+    inputs = get_scenario_inputs()
+    render_scenario_banner(inputs.is_illustrative)
+
     st.title("📄 Page 5: Executive Summary & Project Brief")
     st.markdown(
         """

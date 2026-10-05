@@ -93,3 +93,33 @@ def test_hourly_profile_unmet_demand_trigger() -> None:
     assert np.isclose(hourly_df["pump_served_kwh"].sum(), 1600.0, atol=1e-3)
     # Unmet demand should equal 5,000 - 1,600 = 3,400 kWh
     assert np.isclose(hourly_df["pump_unmet_kwh"].sum(), 3400.0, atol=1e-3)
+
+
+def test_crop_kc_calendar_year_boundary_wrap() -> None:
+    """Verify that Rabi crops spanning the calendar year boundary (e.g. Wheat) wrap correctly."""
+    # Wheat: planting Nov 15 (11-15), 120-day cycle: 20+30+40+30
+    dates = pd.date_range("2024-01-01", "2024-12-31", freq="D")
+    kc_series = calculate_fao56_daily_kc(
+        dates=dates,
+        planting_date_str="11-15",
+        l_ini=20,
+        l_dev=30,
+        l_mid=40,
+        l_end=30,
+        kc_ini=0.40,
+        kc_mid=1.15,
+        kc_end=0.35,
+        year=2024,
+    )
+
+    # In mid-January (day 60 of crop cycle), Wheat should be active with high Kc
+    jan_15_kc = kc_series.loc["2024-01-15"]
+    assert jan_15_kc > 0.8, f"Expected high mid-season Kc in January for wrapped crop, got {jan_15_kc}"
+
+    # In June (off-season), Wheat Kc should be 0.0
+    jun_15_kc = kc_series.loc["2024-06-15"]
+    assert jun_15_kc == 0.0, f"Expected zero off-season Kc in June, got {jun_15_kc}"
+
+    # In late November (just planted), Wheat should be in initial stage (~0.40)
+    nov_20_kc = kc_series.loc["2024-11-20"]
+    assert np.isclose(nov_20_kc, 0.40, atol=0.05)

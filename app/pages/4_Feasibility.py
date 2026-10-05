@@ -22,6 +22,7 @@ from app.state import (
     get_scenario_inputs,
     get_cached_feeder_schedule,
     render_disclaimer_footer,
+    render_scenario_banner,
 )
 from core.feasibility.rules_engine import evaluate_feasibility_rules
 from core.feasibility.explanations import generate_feasibility_verdict
@@ -30,6 +31,9 @@ from core.config_loader import get_assumption_value
 st.set_page_config(page_title="Feasibility Screening - Feeder Solar DSS", page_icon="📋", layout="wide")
 
 try:
+    inputs = get_scenario_inputs()
+    render_scenario_banner(inputs.is_illustrative)
+
     st.title("📋 Page 4: Deterministic Regulatory Feasibility Screening")
     st.markdown(
         """
@@ -38,7 +42,17 @@ try:
         """
     )
 
-    inputs = get_scenario_inputs()
+    if inputs.available_land_acres is None or inputs.available_land_acres <= 0:
+        raise MissingInputError(
+            "available_land_acres",
+            "Available land (acres) not configured. Please enter available land on Page 1 or click 'Load illustrative scenario'.",
+        )
+    if inputs.distance_to_substation_km is None or inputs.distance_to_substation_km <= 0:
+        raise MissingInputError(
+            "distance_to_substation_km",
+            "Distance to substation (km) not configured. Please enter distance on Page 1 or click 'Load illustrative scenario'.",
+        )
+
     schedule_df = get_cached_feeder_schedule()
 
     feeder_rows = schedule_df[schedule_df["feeder_name"] == inputs.feeder_name]
