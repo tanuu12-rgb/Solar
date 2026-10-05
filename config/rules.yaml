@@ -2,7 +2,7 @@
 # SMART FEEDER SOLARIZATION PLANNING AND DECISION SUPPORT SYSTEM (LATUR)
 # config/rules.yaml
 #
-# RULE (PROJECT_SPEC Section 5 Module 6):
+# RULE (PROJECT_SPEC Section 5 Module 6 & Phase 3 Specification):
 # Rules live in this file with:
 #   id, description, parameter, operator, threshold, unit, source, severity (blocking/warning), notes
 # ==============================================================================
@@ -28,15 +28,25 @@ rules:
     severity: "blocking"
     notes: "Maximum plant capacity permitted for connection to 33/11 kV rural substations under MSKVY / KUSUM-C."
 
+  - id: "RULE_SOLAR_SHARE_TARGET"
+    description: "Achieved annual solar share must meet or exceed the target solar share of irrigation energy demand."
+    parameter: "solar_share_fraction"
+    operator: ">="
+    threshold: 0.70
+    unit: "fraction"
+    source: "PM-KUSUM Component C / Maharashtra State RE Policy 70% daytime solar supply target"
+    severity: "blocking"
+    notes: "Annual solar energy delivered to irrigation load divided by total annual irrigation electrical demand."
+
   - id: "RULE_SUBSTATION_DISTANCE_MAX"
-    description: "Distance between proposed solar plant site and 33/11 kV substation must not exceed maximum interconnection limit."
+    description: "Distance between proposed solar plant site and 33/11 kV substation must not exceed maximum interconnection limit for the voltage level."
     parameter: "distance_to_substation_km"
     operator: "<="
     threshold: 5.0
     unit: "km"
     source: "MNRE PM-KUSUM Feeder Solarization Guidelines Section 3.2"
     severity: "blocking"
-    notes: "Substation radius limit within 5 km to minimize 11 kV line evacuation loss and voltage drop."
+    notes: "Substation radius limit within 5 km to minimize 11 kV line evacuation loss and voltage drop (up to 15 km allowed at 33 kV)."
 
   - id: "RULE_LAND_AVAILABILITY"
     description: "Available candidate site land must be greater than or equal to required land area for the proposed capacity."
@@ -77,6 +87,36 @@ rules:
     source: "MSEDCL Distribution Code: Distributed generation interconnection voltage at 11 kV busbar"
     severity: "warning"
     notes: "Standard agricultural feeder busbar voltage level is 11 kV."
+
+  - id: "RULE_FINANCIAL_TARIFF_CEILING"
+    description: "Total annualised cost per kWh solar served must not exceed the regulated grid tariff ceiling."
+    parameter: "cost_per_kwh_solar_served_inr"
+    operator: "<="
+    threshold: 4.50
+    unit: "INR/kWh"
+    source: "MERC Retail Tariff Order for MSEDCL Agricultural Metered Supply Cost (INR 4.50/kWh)"
+    severity: "warning"
+    notes: "Levelized annual cost of solar energy delivered should not exceed the utility retail cost of agricultural supply."
+
+  - id: "RULE_FINANCIAL_BUDGET"
+    description: "Total project capital expenditure must not exceed the user-defined capital budget."
+    parameter: "budget_surplus_inr"
+    operator: ">="
+    threshold: 0.0
+    unit: "INR"
+    source: "User Project Capital Budget Constraint"
+    severity: "blocking"
+    notes: "Budget surplus = user budget - total project capex. Must be >= 0."
+
+  - id: "RULE_UNMET_DEMAND_MAX"
+    description: "Annual unmet irrigation pumping demand must not exceed allowable reliability threshold."
+    parameter: "unmet_demand_fraction"
+    operator: "<="
+    threshold: 0.05
+    unit: "fraction"
+    source: "DISCOM Agricultural Feeder Reliability Benchmark (<= 5% unmet demand)"
+    severity: "warning"
+    notes: "Fraction of annual crop water electrical demand that could not be scheduled within the feeder supply window."
 
   - id: "RULE_PROJECT_COST_PER_MW_MAX"
     description: "Total project capital expenditure per MW must not exceed maximum benchmark cost limit."

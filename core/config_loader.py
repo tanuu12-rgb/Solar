@@ -89,12 +89,17 @@ STAGE_ASSUMPTIONS: Dict[str, List[str]] = {
         "substation_other_load_mw",
     ],
     "stage_5": [
+        "solar_capex_per_mwp",
         "solar_capex_per_mwp_inr",
+        "solar_om_fraction_of_capex",
         "solar_om_per_mwp_per_year_inr",
+        "battery_capex_per_mwh",
         "battery_capex_per_mwh_inr",
+        "battery_om_fraction_of_capex",
         "battery_om_per_mwh_per_year_inr",
         "discount_rate",
         "project_lifetime_years",
+        "grid_tariff_per_kwh",
         "agricultural_electricity_tariff_inr_per_kwh",
         "optimizer_solar_capacity_min_mwp",
         "optimizer_solar_capacity_max_mwp",
@@ -110,6 +115,10 @@ STAGE_ASSUMPTIONS: Dict[str, List[str]] = {
     ],
     "stage_6": [
         "land_requirement_acres_per_mw",
+        "land_cost_per_acre",
+        "line_capex_per_km_11kv",
+        "line_capex_per_km_33kv",
+        "substation_bay_cost",
     ],
     "stage_7": [],
 }

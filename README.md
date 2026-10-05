@@ -1,25 +1,26 @@
-# Smart Feeder Solarization Planning and Decision Support System (Latur, Maharashtra)
+# ऊर्जाSetu: Smart Feeder Solarization Planning & Decision Support System (Latur, Maharashtra)
 
-An engineering decision-support tool for planning dedicated agricultural feeder solarization and battery storage sizing under PM-KUSUM Component C guidelines in Latur District, Maharashtra.
+An engineering decision-support tool for planning dedicated agricultural feeder solarization, battery storage sizing, connection routing, and regulatory feasibility screening under PM-KUSUM Component C guidelines in Latur District, Maharashtra.
 
 ---
 
 ## 1. Project Overview
 
 This decision support system models:
-1. Hourly agricultural water and pumping energy demand (FAO-56 crop evapotranspiration, CGWB groundwater head).
-2. Ground-mounted solar PV generation aligned to Indian Standard Time (IST) using `pvlib`.
-3. Battery energy storage system (BESS) dispatch, transformer evacuation limits, and curtailment avoidance.
-4. Optimal capacity sizing (solar MWp and battery MWh) minimizing annualized system cost.
-5. Rule-based regulatory and technical feasibility screening per MSEDCL and MNRE guidelines.
-6. Interactive Streamlit dashboard for DISCOM engineers and planners.
+1. **Real Agronomic Water & Pumping Demand**: FAO-56 dual crop coefficient ($K_c$) evapotranspiration, USDA effective rainfall, static groundwater depth (CGWB), total dynamic head (TDH), and pump electrical demand strictly constrained to 8-hour feeder supply windows.
+2. **Solar PV Generation Aligned to IST**: Ground-mounted solar PV simulation with `pvlib`, Hay-Davies transposition, and Faiman cell temperature modeling.
+3. **Battery Energy Storage System (BESS) Dispatch**: Hourly dispatch simulation with C-rate limits, round-trip efficiency, state-of-charge tracking, cycle counting, and zero-tolerance energy conservation.
+4. **Lifecycle Cost Optimization**: Capital Recovery Factor (CRF) annualized CAPEX, OPEX, and residual grid cost minimization across solar MWp and battery MWh sizing sweeps, with deterministic bisection search for target solar share.
+5. **GIS Grid Evacuation Route & Losses**: Haversine distance, right-of-way routing, automatic 11 kV vs 33 kV voltage selection, 3-phase $I^2R$ peak and annual electrical loss modeling, and line infrastructure cost estimation.
+6. **Deterministic Regulatory Feasibility Screening**: 3-tier verdict (`Feasible`, `Marginal`, `Rejected`) with ranked statutory rejection reasons, parameter shortfall explanations, and actionable remediation hints based on MSEDCL circulars and PM-KUSUM guidelines.
+7. **Transparent Data Provenance & Decarbonization**: Full cryptographic SHA-256 dataset tracking, avoided $t\text{CO}_2$ emissions benchmarked against CEA grid baselines, and complete assumptions audit.
 
 ---
 
 ## 2. Windows Environment Setup
 
 ### Prerequisites
-- Python 3.11+ (Python 3.14 / 3.11 supported on Windows 64-bit)
+- Python 3.11+ (Python 3.14 / 3.11 verified on Windows 64-bit)
 - PowerShell or Windows Command Prompt
 
 ### Virtual Environment & Dependencies
@@ -39,6 +40,11 @@ python -m pip install -r requirements.txt
 .\.venv\Scripts\pytest.exe -v
 ```
 
+### Running the Streamlit Application
+```powershell
+.\.venv\Scripts\streamlit.exe run app/main.py
+```
+
 ---
 
 ## 3. Project Architecture
@@ -46,21 +52,22 @@ python -m pip install -r requirements.txt
 ```
 feeder_solar/
   PROJECT_SPEC.md                      # Engineering specification and non-negotiable rules
+  APPROVED_CHANGES.md                  # Detailed chronological change log
   README.md                            # Documentation and setup instructions
   requirements.txt                     # Pinned core dependencies
-  .gitignore                           # Git ignore rules
+  pytest.ini                           # Pytest configuration
   config/
-    assumptions.yaml                   # Physical, financial, agronomic, and engineering assumptions
-    rules.yaml                         # Rule-based feasibility screening limits
+    assumptions.yaml                   # 72 physical, financial, agronomic, and engineering assumptions
+    rules.yaml                         # Statutory feasibility screening rules with severity tags
   core/
     __init__.py
     errors.py                          # Typed domain errors (MissingInputError, DataValidationError, etc.)
-    config_loader.py                   # Pydantic v2 configuration parser and validator
+    config_loader.py                   # Pydantic v2 configuration parser and stage validator
     units.py                           # Physical constants and unit conversion equations
     data/
-      loaders.py                       # Raw dataset loaders (NASA POWER, Open-Meteo, Crop XML, Feeder)
+      loaders.py                       # Raw dataset loaders (Open-Meteo, Crop Params, Feeder Schedules)
       validators.py                    # Dataset validation checks (8,784 h, -999 checks, duplicates)
-      time_alignment.py                # Energy-conserving LST-to-IST conversion and window weights
+      time_alignment.py                # Hourly time alignment and feeder supply window overlap weights
     demand/
       crop_water.py                    # FAO-56 daily ETc, effective rainfall, NIR and GIR
       pump_energy.py                   # Hydraulic head and pump electrical energy
@@ -73,38 +80,44 @@ feeder_solar/
       sensitivity.py                   # One-at-a-time sensitivity analysis
     feasibility/
       rules_engine.py                  # Regulatory and technical rule evaluator
-      explanations.py                  # Structured explanation generator
-    emissions.py                       # CEA grid emissions reduction calculation
+      explanations.py                  # Structured explanation generator & ranked rejection reasons
+    gis/
+      __init__.py
+      route.py                         # Haversine distance, voltage selection, line capex, 3-phase I²R losses
+    emissions.py                       # CEA grid emissions and grid dependence calculations
   app/
-    main.py                            # Streamlit entrypoint with disclaimer footer
+    main.py                            # Streamlit landing page with case study highlights
+    theme.py                           # Centralized CSS stylesheet, color tokens, and UI badge chips
+    state.py                           # Centralized state management, data caching, and simulation runners
     pages/
-      1_Inputs_and_Data.py             # Scenario configuration and data quality cards
-      2_Irrigation_Demand.py           # Seasonal demand profiles and sanity checks
-      3_Solar_and_Battery_Sizing.py    # Generation profiles, hero comparison, and sizing grid
-      4_Feasibility.py                 # Rule evaluation matrix and remediation hints
-      5_Summary_Report.py              # Executive summary and export capabilities
-      6_Assumptions_and_Sources.py     # Provenance table of all constants and datasets
+      1_Inputs_and_Data.py             # Feeder selection, crop mix, pump capacity, and window coverage
+      2_Irrigation_Demand.py           # Seasonal crop water requirements, Kc curves, and hourly pump load
+      3_Solar_and_Battery_Sizing.py    # Generation profiles, hero mismatch, BESS dispatch, and optimizer sweep
+      4_Feasibility.py                 # Deterministic regulatory screening, 3-tier verdict, and remediation
+      5_Connection_Route.py            # GIS evacuation route, PyDeck map, voltage selection, and line losses
+      6_Summary_Report.py              # Executive one-page brief and CSV/JSON data export
+      7_Assumptions_and_Sources.py     # Transparent assumptions audit, 7 raw dataset hashes, and ML architecture note
   data/
-    raw/                               # Local historical data repository
-  tests/                               # Pytest suite with hand-calculated benchmarks
+    raw/                               # 7 raw data assets (weather, schedules, crop params, census, policy)
+  tests/                               # Pytest suite with 63 comprehensive unit tests
 ```
 
 ---
 
-## 4. Current Status: Stage 1 Complete
+## 4. Key Engineering Capabilities
 
-Stage 1 (Skeleton, Config Loader, Error Classes, Empty Templates) has been successfully implemented and tested:
-- Typed error classes created in `core/errors.py`.
-- Physical constants and verified hand-calculated formulas implemented in `core/units.py`.
-- Complete configuration templates created in `config/assumptions.yaml` and `config/rules.yaml` with all values left unpopulated per Section 0 Rule 2.
-- Robust Pydantic v2 loader in `core/config_loader.py` enforcing strict missing key and unpopulated value detection.
-- Full directory skeleton and module stubs generated.
-- Test suite passing 15/15 tests including a codebase hygiene check preventing random/mock data generation.
+- **Staggered Agricultural Feeder Windows**: Models MSEDCL 8-hour daytime supply schedules (e.g. 06:00–14:00, 08:00–16:00, 10:00–18:00) and quantifies solar window capture ratios.
+- **Strict Input Honesty**: Zero silent defaults. If agricultural crop hectares or pump ratings are unconfigured, the system prompts the user or offers a 1-click illustrative scenario toggle.
+- **Comprehensive Lifecycle Cost Model**: Incorporates solar CAPEX, BESS initial CAPEX, battery replacement at end of life, annual O&M, and grid power purchase tariffs.
+- **Deterministic Feasibility Verdict**: Evaluates power transformer headroom, land availability, distance to substation, daytime window duration, evacuation voltage, and capex budget.
+- **Physical Loss Modeling**: Calculates 3-phase $I^2R$ power evacuation losses and energy dissipation based on conductor electrical resistance.
 
 ---
 
-## 5. Non-Negotiable Rules & Limitations
+## 5. Test Suite Verification
 
-- **No Synthetic or Mock Data:** All computations rely exclusively on local historical files in `data/raw/` and user-provided inputs.
-- **Fail Loudly:** Missing configuration keys, unpopulated parameters, or malformed data immediately raise typed errors.
-- **Decision Support Disclaimer:** This tool provides early-stage decision support and does not replace comprehensive DISCOM power flow, transient stability, or detailed protection coordination studies.
+Run all unit tests via pytest:
+```powershell
+.\.venv\Scripts\pytest.exe -v
+```
+All 63 unit tests pass across configuration loading, data ingestion, demand calculations, solar transposition, battery dispatch physics, feasibility rules, GIS routing, and cost optimization.

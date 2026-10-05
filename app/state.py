@@ -117,17 +117,26 @@ def get_illustrative_scenario_inputs() -> ScenarioInputs:
     )
 
 
-def render_scenario_banner(is_illustrative: bool = False) -> None:
-    """Render mandatory scenario input provenance banner across Pages 1 to 5."""
-    if is_illustrative:
-        st.warning(
-            "⚠️ **ILLUSTRATIVE SCENARIO:** Scenario inputs are illustrative assumptions loaded for demonstration, "
-            "not measured feeder data."
-        )
-    else:
-        st.info(
-            "ℹ️ **NOTICE:** Scenario inputs are user-supplied, not measured feeder data."
-        )
+def render_scenario_banner(is_illustrative: bool = False, feeder_name: Optional[str] = None) -> None:
+    """Render mandatory scenario input provenance banner across Pages 1 to 7."""
+    from app.theme import render_scenario_banner as theme_banner
+    theme_banner(is_illustrative=is_illustrative, feeder_name=feeder_name)
+
+
+def render_missing_input_card(error: MissingInputError) -> None:
+    """Render a helpful card when required feeder inputs are unconfigured."""
+    st.warning(
+        f"⚠️ **Feeder Configuration Required:** `{error.key}`\n\n"
+        f"{error.message or 'This engineering stage requires specific feeder parameters that have not been configured yet.'}\n\n"
+        "Per **PROJECT_SPEC Section 0 Rule 1 & Rule 3 (Input Honesty)**, the system does not inject silent synthetic defaults. "
+        "You can configure custom parameters on **Page 1: Inputs & Data**, or immediately load an illustrative case study for demonstration."
+    )
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if st.button("✨ Load Illustrative Scenario (Bhatangali Demo)", type="primary", key=f"btn_load_demo_{error.key}"):
+            save_scenario_inputs(get_illustrative_scenario_inputs())
+            st.rerun()
+
 
 
 
@@ -171,19 +180,61 @@ def get_cached_rules() -> List[RuleEntry]:
 
 
 def get_dataset_provenance() -> List[Dict[str, Any]]:
-    """Return provenance summary for all local raw data files."""
+    """Return provenance summary for all 7 local raw data files."""
     root = Path(__file__).resolve().parent.parent
+    raw_dir = root / "data" / "raw"
     files = [
-        ("Weather Data (Open-Meteo 2024 IST)", root / "data" / "raw" / "open-meteo-18.38N76.54E633m.csv"),
-        ("Feeder Supply Schedules (MSEDCL Annexure-A)", root / "data" / "raw" / "feeder_schedule.csv"),
-        ("Crop Growth Parameters (FAO-56 Tables 11/12)", root / "data" / "raw" / "crop_params.csv"),
+        (
+            "Open-Meteo Hourly Weather (2024 IST)",
+            raw_dir / "open-meteo-18.38N76.54E633m.csv",
+            "Active",
+            "Hourly temperature, wind, ET0, rain, GHI, DNI, DHI in IST. Powers pvlib POA & FAO-56.",
+        ),
+        (
+            "MSEDCL Feeder Supply Schedules (Annexure-A)",
+            raw_dir / "feeder_schedule.csv",
+            "Active",
+            "33/11kV Bhatangali feeder windows (8h), PT capacity (5 MVA), plant MWp.",
+        ),
+        (
+            "FAO-56 Crop Growth Parameters",
+            raw_dir / "crop_params.csv",
+            "Active",
+            "Kc coefficients (ini, mid, end) and stage lengths for Soybean, Gram, Sugarcane, Tur, Wheat.",
+        ),
+        (
+            "Latur Irrigation Area Census (2011-12)",
+            raw_dir / "2011-12_Irrigation_Area_Latur.zip",
+            "Check-Only",
+            "Ministry of Agriculture District Census: Well vs. Canal irrigated area reference archive.",
+        ),
+        (
+            "Latur Crop Production Census (2011-12)",
+            raw_dir / "2011-12_Production_Crops_Latur.zip",
+            "Check-Only",
+            "Ministry of Agriculture District Census: Taluka-level crop area & production reference.",
+        ),
+        (
+            "MSEDCL KUSUM-C Daytime Ag Circular (2024)",
+            raw_dir / "Ltr-to-field_KUSUM-C_Daytime-Ag_06.08.24-1.pdf",
+            "Check-Only",
+            "MSEDCL circular establishing daytime solar agricultural feeder policy & guidelines.",
+        ),
+        (
+            "NASA POWER Hourly Solar Irradiance Archive",
+            raw_dir / "POWER_Point_Hourly_20240101_20240229_018d38N_076d54E_LST.csv",
+            "Check-Only",
+            "NASA POWER satellite solar archive (LST) retained for validation benchmarking.",
+        ),
     ]
     records = []
-    for label, path in files:
+    for label, path, status, purpose in files:
         if path.exists():
             records.append({
                 "dataset": label,
                 "filename": path.name,
+                "status": status,
+                "purpose": purpose,
                 "size_kb": round(path.stat().st_size / 1024.0, 1),
                 "sha256": compute_file_sha256(path),
             })
@@ -191,6 +242,8 @@ def get_dataset_provenance() -> List[Dict[str, Any]]:
             records.append({
                 "dataset": label,
                 "filename": path.name,
+                "status": status,
+                "purpose": purpose,
                 "size_kb": 0.0,
                 "sha256": "MISSING",
             })

@@ -180,11 +180,16 @@ def simulate_hourly_dispatch(
     avoided_emiss = (total_solar_served_kwh * 0.716) / 1000.0
 
     metrics = {
+        "total_demand_kwh": total_demand_kwh,
+        "total_solar_generation_kwh": total_solar_kwh,
+        "total_solar_served_kwh": total_solar_served_kwh,
+        "grid_imported_kwh": total_grid_to_demand_kwh,
         "total_demand_mwh": round(total_demand_kwh / 1000.0, 2),
         "total_solar_generation_mwh": round(total_solar_kwh / 1000.0, 2),
         "solar_direct_to_demand_mwh": round(total_solar_to_demand_kwh / 1000.0, 2),
         "total_solar_direct_to_load_mwh": round(total_solar_to_demand_kwh / 1000.0, 2),
         "battery_to_demand_mwh": round(total_battery_to_demand_kwh / 1000.0, 2),
+        "battery_discharge_to_demand_mwh": round(total_battery_to_demand_kwh / 1000.0, 2),
         "total_battery_discharge_to_load_mwh": round(total_battery_to_demand_kwh / 1000.0, 2),
         "total_solar_served_mwh": round(total_solar_served_kwh / 1000.0, 2),
         "grid_imported_mwh": round(total_grid_to_demand_kwh / 1000.0, 2),

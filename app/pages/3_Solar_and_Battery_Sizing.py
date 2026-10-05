@@ -22,6 +22,8 @@ import streamlit as st
 from core.errors import MissingInputError
 from app.state import (
     get_scenario_inputs,
+    save_scenario_inputs,
+    get_illustrative_scenario_inputs,
     get_cached_feeder_schedule,
     get_cached_weather,
     run_cached_demand,
@@ -31,23 +33,45 @@ from app.state import (
     render_scenario_banner,
 )
 from core.solar.pv_model import validate_plant_yield_and_cuf, analyze_feeder_window_coverage
-from core.solar.optimizer import run_capacity_optimization_sweep
+from core.solar.optimizer import (
+    run_capacity_optimization_sweep,
+    calculate_command_area_for_target_share,
+    get_missing_cost_assumptions,
+)
 from core.solar.sensitivity import run_tornado_sensitivity
 from core.emissions import calculate_avoided_emissions
+from app.theme import apply_theme
 
-st.set_page_config(page_title="Solar & Battery Sizing - Feeder Solar DSS", page_icon="⚡", layout="wide")
+def render_missing_input_card(error: object) -> None:
+    key_name = getattr(error, "key", "Scenario Input")
+    msg = getattr(error, "message", str(error)) or "This engineering stage requires specific feeder parameters that have not been configured yet."
+    st.warning(
+        f"⚠️ **Feeder Configuration Required:** `{key_name}`\n\n"
+        f"{msg}\n\n"
+        "Per **PROJECT_SPEC Section 0 Rule 1 & Rule 3 (Input Honesty)**, the system does not inject silent synthetic defaults. "
+        "You can configure custom parameters on **Page 1: Inputs & Data**, or immediately load an illustrative case study for demonstration."
+    )
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if st.button("✨ Load Illustrative Scenario (Bhatangali Demo)", type="primary", key=f"btn_load_demo_{key_name}"):
+            save_scenario_inputs(get_illustrative_scenario_inputs())
+            st.rerun()
+
+from app.theme import apply_theme, render_urja_header
+
+st.set_page_config(page_title="ऊर्जाSetu - Solar & Battery Sizing", page_icon="☀️", layout="wide")
+apply_theme()
+
+render_urja_header(
+    title="Solar & Battery (BESS) Sizing",
+    subtitle="pvlib Hay-Davies transposition, hourly BESS dispatch, annualized cost optimization, and Pareto frontier.",
+    badge_label="Step 3 of 6 • Sizing & Optimization",
+    icon="☀️",
+)
 
 try:
     inputs = get_scenario_inputs()
-    render_scenario_banner(inputs.is_illustrative)
-
-    st.title("⚡ Page 3: Solar PV & Battery Storage (BESS) Sizing")
-    st.markdown(
-        """
-        Evaluates solar PV generation via `pvlib`, window capture efficiency across feeders,
-        hourly battery dispatch physics, curtailment mitigation, capacity optimization, and parameter sensitivity.
-        """
-    )
+    render_scenario_banner(inputs.is_illustrative, inputs.feeder_name)
 
     inputs = get_scenario_inputs()
     schedule_df = get_cached_feeder_schedule()
@@ -242,6 +266,13 @@ try:
         st.markdown("##### Solar PV & Battery Capacity Optimization Sweep")
         st.caption("Sweeps candidate solar (MWp) and battery (MWh) ratings to minimize annualized cost while meeting the target solar share.")
 
+        missing_cost_keys = get_missing_cost_assumptions()
+        if missing_cost_keys:
+            st.warning(
+                f"Missing cost assumptions: {', '.join(missing_cost_keys)}. "
+                f"Evaluation uses illustrative scenario cost parameters."
+            )
+
         sweep_df, best_config = run_capacity_optimization_sweep(
             solar_series_per_kwp=solar_df["solar_generation_kwh"] / (inputs.candidate_solar_mwp * 1000.0),
             demand_series_kwh=hourly_demand_df["pump_served_kwh"],
@@ -250,32 +281,73 @@ try:
 
         if best_config:
             st.success(
-                f"**Recommended Least-Cost Feasible Configuration:**\n"
-                f"- **Solar Capacity:** {best_config['solar_mwp']:.1f} MWp\n"
-                f"- **Battery Storage:** {best_config['battery_mwh']:.1f} MWh\n"
-                f"- **Achieved Solar Share:** {best_config['solar_share_percent']:.1f}%\n"
-                f"- **Annualized Cost:** ₹{best_config['total_annualised_cost_inr'] / 1e5:.2f} Lakhs/year "
-                f"(₹{best_config['cost_per_kwh_solar_served_inr']:.2f}/kWh solar served)"
+                f"**Headline Cost-Optimal Feasible Sizing:**\n\n"
+                f"- **Optimal Solar Capacity:** **{best_config['solar_mwp']:.1f} MWp**\n"
+                f"- **Optimal Battery Storage:** **{best_config['battery_mwh']:.1f} MWh**\n"
+                f"- **Achieved Solar Share:** **{best_config['solar_share_percent']:.1f}%** (Target: {inputs.target_solar_share*100:.1f}%)\n"
+                f"- **Total Annualised Cost:** **₹{best_config['total_annualised_cost_inr'] / 1e5:.2f} Lakhs/year** "
+                f"(₹{best_config['cost_per_kwh_solar_served_inr']:.2f}/kWh solar served)\n"
+                f"- **Total Capital Expenditure (CAPEX):** **₹{best_config['total_capex_inr'] / 1e7:.2f} Crore**"
             )
+            col_kpi1, col_kpi2, col_kpi3, col_kpi4 = st.columns(4)
+            col_kpi1.metric("Optimal Solar", f"{best_config['solar_mwp']:.1f} MWp")
+            col_kpi2.metric("Optimal Battery", f"{best_config['battery_mwh']:.1f} MWh")
+            col_kpi3.metric("Annualized Cost", f"₹{best_config['total_annualised_cost_inr'] / 1e5:.1f} L/yr")
+            col_kpi4.metric("Cost per kWh Solar", f"₹{best_config['cost_per_kwh_solar_served_inr']:.2f}/kWh")
         else:
-            st.error("No configuration in the sweep range met the target solar share. Consider lowering the target or expanding the sweep.")
+            msg = sweep_df.attrs.get("unreachable_message") or (
+                f"Target solar share of {inputs.target_solar_share*100:.1f}% is unreachable within the evaluated search bounds."
+            )
+            st.error(msg)
 
-        fig_pareto = px.scatter(
-            sweep_df,
-            x="solar_share_percent",
-            y="cost_per_kwh_solar_served_inr",
-            size="battery_mwh",
-            color="is_feasible",
-            hover_data=["solar_mwp", "battery_mwh", "total_annualised_cost_inr"],
-            labels={
-                "solar_share_percent": "Solar Share (%)",
-                "cost_per_kwh_solar_served_inr": "Cost per kWh Solar Served (₹/kWh)",
-                "is_feasible": "Meets Target Share",
-                "battery_mwh": "Battery (MWh)",
-            },
-            title="Cost per kWh Solar Served vs. Solar Share (Bubble Size = Battery MWh)",
-        )
-        st.plotly_chart(fig_pareto, use_container_width=True)
+        col_plot1, col_plot2 = st.columns(2)
+
+        with col_plot1:
+            st.markdown("###### Cost vs. Solar Share Frontier")
+            fig_pareto = px.scatter(
+                sweep_df,
+                x="solar_share_percent",
+                y="cost_per_kwh_solar_served_inr",
+                size="battery_mwh",
+                color="is_feasible",
+                color_discrete_map={True: "#2E7D32", False: "#C62828"},
+                hover_data=["solar_mwp", "battery_mwh", "total_annualised_cost_inr"],
+                labels={
+                    "solar_share_percent": "Solar Share (%)",
+                    "cost_per_kwh_solar_served_inr": "Cost per kWh Solar (₹/kWh)",
+                    "is_feasible": "Meets Target",
+                    "battery_mwh": "Battery (MWh)",
+                },
+                title="Cost per kWh Solar vs. Solar Share (Frontier)",
+            )
+            if best_config:
+                fig_pareto.add_trace(
+                    go.Scatter(
+                        x=[best_config["solar_share_percent"]],
+                        y=[best_config["cost_per_kwh_solar_served_inr"]],
+                        mode="markers+text",
+                        marker=dict(symbol="star", size=18, color="#F2A900", line=dict(color="#0B3C5D", width=2)),
+                        name="Least-Cost Optimal",
+                        text=["Optimal"],
+                        textposition="top center",
+                    )
+                )
+            fig_pareto.update_layout(hovermode="closest", legend_title_text="Feasibility")
+            st.plotly_chart(fig_pareto, use_container_width=True)
+
+        with col_plot2:
+            st.markdown("###### MWp × MWh Annualized Cost Heatmap (₹ Lakhs/year)")
+            heatmap_data = sweep_df.pivot(index="battery_mwh", columns="solar_mwp", values="total_annualised_cost_inr") / 1e5
+            fig_heat = px.imshow(
+                heatmap_data.round(1),
+                labels=dict(x="Solar Capacity (MWp)", y="Battery Capacity (MWh)", color="Cost (₹ Lakhs)"),
+                x=heatmap_data.columns.astype(str),
+                y=heatmap_data.index.astype(str),
+                text_auto=True,
+                color_continuous_scale="Viridis",
+                title="Total Annualized Cost Grid (₹ Lakhs/year)",
+            )
+            st.plotly_chart(fig_heat, use_container_width=True)
 
     with tab_sens:
         st.markdown("##### One-at-a-Time (OAT) Sensitivity Tornado Chart")
@@ -316,8 +388,64 @@ try:
         )
         st.plotly_chart(fig_torn, use_container_width=True)
 
+    st.markdown("---")
+
+    # --- SECTION 5: Inverse Sizing: Command Area Needed ---
+    st.subheader("5. Inverse Sizing: Command Area Needed for Target Solar Share")
+    st.caption("Determines the maximum agricultural command area that the candidate solar plant can support while maintaining the target solar share.")
+
+    col_inv1, col_inv2 = st.columns([1, 2])
+    with col_inv1:
+        inv_plant_mw = st.number_input(
+            "Candidate Solar Plant (MWp)",
+            min_value=0.5,
+            max_value=10.0,
+            value=float(inputs.candidate_solar_mwp),
+            step=0.5,
+            key="inv_plant_mw",
+        )
+        inv_target_pct = st.slider(
+            "Target Solar Share (%)",
+            min_value=10,
+            max_value=100,
+            value=int(inputs.target_solar_share * 100 if inputs.target_solar_share <= 1.0 else inputs.target_solar_share),
+            step=5,
+            key="inv_target_pct",
+        )
+        inv_bess_mwh = st.number_input(
+            "Candidate Battery Storage (MWh)",
+            min_value=0.0,
+            max_value=20.0,
+            value=float(inputs.candidate_battery_mwh),
+            step=0.5,
+            key="inv_bess_mwh",
+        )
+
+    inv_res = calculate_command_area_for_target_share(
+        base_demand_kwh_series=hourly_demand_df["pump_served_kwh"],
+        solar_kwh_series=solar_df["solar_generation_kwh"] * (inv_plant_mw / inputs.candidate_solar_mwp),
+        base_command_area_ha=inputs.command_area_ha,
+        target_solar_share=inv_target_pct / 100.0,
+        battery_capacity_mwh=inv_bess_mwh,
+        pt_capacity_mva=inputs.pt_capacity_mva,
+    )
+
+    with col_inv2:
+        if inv_res["feasible"]:
+            st.success(
+                f"**Inverse Sizing Result:**\n\n"
+                f"A **{inv_plant_mw:.1f} MWp** solar plant (with {inv_bess_mwh:.1f} MWh BESS) can support up to "
+                f"**{inv_res['command_area_ha']:.1f} hectares** of command area to achieve the target **{inv_target_pct}%** solar share.\n\n"
+                f"- **Annual Irrigation Demand:** {inv_res['annual_demand_mwh']:.1f} MWh\n"
+                f"- **Solar Energy Served:** {inv_res['solar_served_mwh']:.1f} MWh\n"
+                f"- **Achieved Solar Share:** {inv_res['achieved_solar_share_percent']:.1f}%\n"
+                f"- **Command Area Scaling Factor:** {inv_res['scale_factor']:.2f}× relative to base command area ({inputs.command_area_ha:.1f} ha)"
+            )
+        else:
+            st.error(inv_res["message"])
+
     render_disclaimer_footer()
 
 except MissingInputError as e:
-    st.error(f"Missing required configuration key: {e.key}")
+    render_missing_input_card(e)
     render_disclaimer_footer()

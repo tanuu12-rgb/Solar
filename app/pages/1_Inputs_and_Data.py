@@ -36,7 +36,17 @@ from app.state import (
     render_disclaimer_footer,
 )
 
-st.set_page_config(page_title="Inputs & Data Quality - Feeder Solar DSS", page_icon="⚙️", layout="wide")
+from app.theme import apply_theme, render_urja_header
+
+st.set_page_config(page_title="ऊर्जाSetu - Inputs & Data Quality", page_icon="⚙️", layout="wide")
+apply_theme()
+
+render_urja_header(
+    title="Inputs & Data Quality Audit",
+    subtitle="Configure feeder parameters, command area crop mix, connected pump ratings, and verify meteorological datasets.",
+    badge_label="Step 1 of 6 • Data Audit",
+    icon="📥",
+)
 
 try:
     current_inputs = get_scenario_inputs()
@@ -45,21 +55,12 @@ try:
     crop_params_df = get_cached_crop_params()
 
     # --- Scenario Provenance Banner ---
-    render_scenario_banner(current_inputs.is_illustrative)
+    render_scenario_banner(current_inputs.is_illustrative, current_inputs.feeder_name)
 
-    head_c1, head_c2 = st.columns([3, 1])
-    with head_c1:
-        st.title("⚙️ Page 1: Inputs, Configuration & Data Quality Audit")
-        st.markdown(
-            """
-            Configure candidate feeder scenario parameters, review command area agronomic inputs,
-            audit local meteorological datasets and data quality checks, and compare solar energy
-            capture across all feeder supply windows.
-            """
-        )
-    with head_c2:
-        st.write("")
-        if st.button("📋 Load Illustrative Scenario", help="Fills sample scenario values tagged as ILLUSTRATIVE (not measured feeder data)"):
+    # --- Quick Action Bar ---
+    q_col1, q_col2 = st.columns([3, 1])
+    with q_col2:
+        if st.button("✨ Load Bhatangali Demo", type="secondary", help="Fills sample scenario values tagged as ILLUSTRATIVE"):
             save_scenario_inputs(get_illustrative_scenario_inputs())
             st.rerun()
 

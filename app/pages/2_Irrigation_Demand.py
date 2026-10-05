@@ -22,6 +22,8 @@ import streamlit as st
 from core.errors import MissingInputError
 from app.state import (
     get_scenario_inputs,
+    save_scenario_inputs,
+    get_illustrative_scenario_inputs,
     get_cached_feeder_schedule,
     get_cached_weather,
     get_cached_crop_params,
@@ -30,20 +32,38 @@ from app.state import (
     render_scenario_banner,
 )
 from core.demand.crop_water import calculate_fao56_daily_kc
+from app.theme import apply_theme
 
-st.set_page_config(page_title="Irrigation Demand - Feeder Solar DSS", page_icon="💧", layout="wide")
+def render_missing_input_card(error: object) -> None:
+    key_name = getattr(error, "key", "Scenario Input")
+    msg = getattr(error, "message", str(error)) or "This engineering stage requires specific feeder parameters that have not been configured yet."
+    st.warning(
+        f"⚠️ **Feeder Configuration Required:** `{key_name}`\n\n"
+        f"{msg}\n\n"
+        "Per **PROJECT_SPEC Section 0 Rule 1 & Rule 3 (Input Honesty)**, the system does not inject silent synthetic defaults. "
+        "You can configure custom parameters on **Page 1: Inputs & Data**, or immediately load an illustrative case study for demonstration."
+    )
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        if st.button("✨ Load Illustrative Scenario (Bhatangali Demo)", type="primary", key=f"btn_load_demo_{key_name}"):
+            save_scenario_inputs(get_illustrative_scenario_inputs())
+            st.rerun()
+
+from app.theme import apply_theme, render_urja_header
+
+st.set_page_config(page_title="ऊर्जाSetu - Irrigation Demand", page_icon="💧", layout="wide")
+apply_theme()
+
+render_urja_header(
+    title="Irrigation Demand Engine",
+    subtitle="FAO-56 dual Kc crop water balance, TDH pump physics, and 8-hour feeder supply window load distribution.",
+    badge_label="Step 2 of 6 • Water Physics",
+    icon="💧",
+)
 
 try:
     inputs = get_scenario_inputs()
-    render_scenario_banner(inputs.is_illustrative)
-
-    st.title("💧 Page 2: Agricultural Irrigation Energy Demand")
-    st.markdown(
-        """
-        Calculates crop water requirements based on **FAO-56 dual crop coefficients**, effective rainfall,
-        and pump electrical energy consumption across the feeder's dedicated 8-hour supply window.
-        """
-    )
+    render_scenario_banner(inputs.is_illustrative, inputs.feeder_name)
 
     inputs = get_scenario_inputs()
     schedule_df = get_cached_feeder_schedule()
@@ -157,7 +177,7 @@ try:
         monthly_summary = daily_copy.groupby(["month_num", "month"]).agg({
             "e_el_kwh": lambda x: x.sum() / 1000.0,
             "total_water_volume_m3": lambda x: x.sum() / 1000.0,
-            "effective_rain_mm": "sum",
+            "peff_mm": "sum",
             "et0_mm": "sum",
         }).reset_index().sort_values("month_num")
 
@@ -165,7 +185,7 @@ try:
             columns={
                 "e_el_kwh": "Energy Demand (MWh)",
                 "total_water_volume_m3": "Water Volume (1000 m³)",
-                "effective_rain_mm": "Effective Rain (mm)",
+                "peff_mm": "Effective Rain (mm)",
                 "et0_mm": "ET₀ (mm)",
             },
             inplace=True,
@@ -250,5 +270,5 @@ try:
     render_disclaimer_footer()
 
 except MissingInputError as e:
-    st.error(f"Missing required configuration key: {e.key}")
+    render_missing_input_card(e)
     render_disclaimer_footer()

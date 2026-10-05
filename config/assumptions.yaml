@@ -380,12 +380,26 @@ energy_balance_tolerance_kwh:
 # 6. ECONOMICS, OPTIMIZER & EMISSIONS (PROJECT_SPEC Section 5 Module 5)
 # ------------------------------------------------------------------------------
 
+solar_capex_per_mwp:
+  value: 40000000.0
+  unit: "INR/MWp"
+  source: "MERC Generic Tariff Order for Solar PV Projects in Maharashtra (INR 4.00 Cr/MWp benchmark capital cost)"
+  type: "assumption"
+  notes: "Capital expenditure per unit capacity of ground-mounted solar PV plant. Source: MERC generic tariff order or MNRE PM-KUSUM benchmark cost notification."
+
 solar_capex_per_mwp_inr:
   value: 40000000.0
   unit: "INR/MWp"
   source: "MERC Generic Tariff Order for Solar PV Projects in Maharashtra (INR 4.00 Cr/MWp benchmark capital cost)"
   type: "assumption"
   notes: "Capital expenditure per unit capacity of ground-mounted solar PV plant. Source: MERC generic tariff order or MNRE PM-KUSUM benchmark cost notification."
+
+solar_om_fraction_of_capex:
+  value: 0.0125
+  unit: "fraction"
+  source: "MERC Tariff Order O&M benchmark (1.25% of benchmark capital cost per year)"
+  type: "assumption"
+  notes: "Annual operation and maintenance expenditure of solar plant expressed as a fraction of initial solar capital expenditure. Source: MERC tariff order or CERC terms and conditions for tariff determination."
 
 solar_om_per_mwp_per_year_inr:
   value: 500000.0
@@ -394,12 +408,26 @@ solar_om_per_mwp_per_year_inr:
   type: "assumption"
   notes: "Annual operation and maintenance cost per unit capacity of solar PV plant. Source: MERC tariff order or competitive bidding contract."
 
+battery_capex_per_mwh:
+  value: 18000000.0
+  unit: "INR/MWh"
+  source: "CEA Energy Storage Roadmap 2024 / SECI 1200 MWh BESS Tender Price Discovery"
+  type: "assumption"
+  notes: "Total capital expenditure per unit energy capacity of battery energy storage system. Source: Utility BESS tender award or CEA energy storage cost report."
+
 battery_capex_per_mwh_inr:
   value: 18000000.0
   unit: "INR/MWh"
   source: "CEA Energy Storage Roadmap 2024 / SECI 1200 MWh BESS Tender Price Discovery"
   type: "assumption"
   notes: "Total capital expenditure per unit energy capacity of battery energy storage system. Source: Utility BESS tender award or CEA energy storage cost report."
+
+battery_om_fraction_of_capex:
+  value: 0.02
+  unit: "fraction"
+  source: "SECI BESS Tender Standard Terms (2% of storage capex per year long-term service agreement)"
+  type: "assumption"
+  notes: "Annual operation and maintenance expenditure of BESS expressed as a fraction of initial storage capital expenditure. Source: SECI standard bidding guidelines or utility storage procurement contract."
 
 battery_om_per_mwh_per_year_inr:
   value: 360000.0
@@ -436,12 +464,47 @@ project_lifetime_years:
   type: "assumption"
   notes: "Operational economic lifetime of solar power project. Source: Power Purchase Agreement or regulatory asset life guidelines."
 
+grid_tariff_per_kwh:
+  value: 4.50
+  unit: "INR/kWh"
+  source: "MERC Retail Tariff Order for MSEDCL Agricultural Metered HT/LT Supply Cost"
+  type: "assumption"
+  notes: "Grid electricity tariff per kWh for agricultural feeder supply or DISCOM average cost of supply. Source: MERC retail tariff order."
+
 agricultural_electricity_tariff_inr_per_kwh:
   value: 4.50
   unit: "INR/kWh"
   source: "MERC Retail Tariff Order for MSEDCL Agricultural Metered HT/LT Supply Cost"
   type: "assumption"
   notes: "Subsidized agricultural electricity tariff or average cost of supply for economic sensitivity. Source: MSEDCL retail tariff schedule approved by MERC."
+
+line_capex_per_km_11kv:
+  value: 800000.0
+  unit: "INR/km"
+  source: "MSEDCL Cost Data Book Schedule of Rates for 11 kV overhead line with ACSR Dog/Racoon conductor"
+  type: "assumption"
+  notes: "Capital cost per kilometer of 11 kV transmission/evacuation line infrastructure. Source: MSEDCL Schedule of Rates or DISCOM standard cost data book."
+
+line_capex_per_km_33kv:
+  value: 1500000.0
+  unit: "INR/km"
+  source: "MSEDCL Cost Data Book Schedule of Rates for 33 kV overhead sub-transmission line with ACSR Panther conductor"
+  type: "assumption"
+  notes: "Capital cost per kilometer of 33 kV transmission line infrastructure. Source: MSEDCL Schedule of Rates or DISCOM standard cost data book."
+
+substation_bay_cost:
+  value: 2500000.0
+  unit: "INR"
+  source: "MSEDCL Cost Data Book Schedule of Rates for dedicated 11/33 kV feeder bay terminal equipment and protection switchgear"
+  type: "assumption"
+  notes: "Terminal equipment, breaker, and switchgear bay expansion cost at the interconnecting substation. Source: MSEDCL Schedule of Rates or DISCOM capital cost guidelines."
+
+land_cost_per_acre:
+  value: 500000.0
+  unit: "INR/acre"
+  source: "Government of Maharashtra Ready Reckoner Rates / Revenue Department agricultural land circle rates for rural Latur"
+  type: "assumption"
+  notes: "Estimated land acquisition or long-term lease capital cost per acre for solar plant site. Source: Department of Registration and Stamps Ready Reckoner or local circle rates."
 
 optimizer_solar_capacity_min_mwp:
   value: 0.5
@@ -516,3 +579,56 @@ land_requirement_acres_per_mw:
   source: "MNRE PM-KUSUM Land Guidelines (3.5 to 4.5 acres per MW for ground-mounted fixed-tilt PV)"
   type: "assumption"
   notes: "Required land area per unit capacity of ground-mounted solar plant. Source: MNRE guidelines, state solar policy, or EPC contractor land assessment."
+
+# ------------------------------------------------------------------------------
+# 8. GIS ROUTING & TRANSMISSION CONDUCTOR PARAMETERS (PROJECT_SPEC Section 5 Module 7)
+# ------------------------------------------------------------------------------
+
+gis_route_factor:
+  value: 1.25
+  unit: "dimensionless"
+  source: "CBIP Manual on Transmission Line Design: Rural Distribution Line Routing Multiplier (1.20 to 1.30)"
+  type: "assumption"
+  notes: "Heuristic multiplier applied to straight-line distance to estimate actual right-of-way alignment route length."
+
+line_resistance_per_km_11kv_ohm:
+  value: 0.54
+  unit: "Ohm/km"
+  source: "CEA Manual on Substation & Transmission Conductor Ratings (ACSR Dog/Racoon 0.54 Ohm/km)"
+  type: "assumption"
+  notes: "AC positive-sequence resistance per kilometer of 11 kV overhead line."
+
+line_resistance_per_km_33kv_ohm:
+  value: 0.27
+  unit: "Ohm/km"
+  source: "CEA Manual on Substation & Transmission Conductor Ratings (ACSR Panther 0.27 Ohm/km)"
+  type: "assumption"
+  notes: "AC positive-sequence resistance per kilometer of 33 kV overhead sub-transmission line."
+
+line_reactance_per_km_11kv_ohm:
+  value: 0.38
+  unit: "Ohm/km"
+  source: "Central Board of Irrigation and Power (CBIP) Rural Distribution Standard Reactance"
+  type: "assumption"
+  notes: "Inductive reactance per kilometer of 11 kV overhead line."
+
+line_reactance_per_km_33kv_ohm:
+  value: 0.35
+  unit: "Ohm/km"
+  source: "Central Board of Irrigation and Power (CBIP) 33 kV Line Reactance"
+  type: "assumption"
+  notes: "Inductive reactance per kilometer of 33 kV overhead line."
+
+gis_grid_cell_size_deg:
+  value: 0.005
+  unit: "degrees"
+  source: "GIS least-cost path spatial grid resolution parameter (~500m)"
+  type: "assumption"
+  notes: "Coarse raster grid cell size in decimal degrees for networkx least-cost path obstacle avoidance routing."
+
+gis_obstacle_cost_multiplier:
+  value: 100.0
+  unit: "dimensionless"
+  source: "Least-cost routing penalty weight for environmental and physical obstacles"
+  type: "assumption"
+  notes: "Cost weight penalty applied to grid cells intersecting obstacle polygons."
