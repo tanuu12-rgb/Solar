@@ -1,0 +1,510 @@
+# ==============================================================================
+# SMART FEEDER SOLARIZATION PLANNING AND DECISION SUPPORT SYSTEM (LATUR)
+# config/assumptions.yaml
+#
+# RULE (PROJECT_SPEC Section 0 Rule 2):
+# Every physical, financial or policy constant lives in this file or config/rules.yaml.
+# Each entry MUST have:
+#   value: real cited value
+#   unit: string
+#   source: string (document + section, or URL)
+#   type: 'assumption'
+#   notes: string
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. TIME CONVENTIONS & DATASET PARSING (PROJECT_SPEC Section 3)
+# ------------------------------------------------------------------------------
+
+interval_convention_open_meteo:
+  value: "preceding_hour"
+  unit: "dimensionless"
+  source: "Open-Meteo Historical Weather API Documentation (hourly aggregation interval convention)"
+  type: "assumption"
+  notes: "Interval convention for Open-Meteo hourly precipitation and reference evapotranspiration ('preceding_hour' or 'following_hour'). Source: Open-Meteo API documentation or dataset specification."
+
+nasa_hour_convention:
+  value: "hour_beginning"
+  unit: "dimensionless"
+  source: "NASA POWER Methodology Section 3 (Hourly Data User Guide)"
+  type: "assumption"
+  notes: "NASA POWER hourly timestamp convention ('hour_beginning', 'centred', or 'hour_ending'). Source: NASA POWER methodology documentation."
+
+crop_area_unit:
+  value: "hectare"
+  unit: "dimensionless"
+  source: "Directorate of Economics and Statistics, Maharashtra District Statistical Abstract 2011-12"
+  type: "assumption"
+  notes: "Unit of land area reported in the district irrigation area dataset. Source: Directorate of Economics and Statistics or District Statistical Abstract."
+
+# ------------------------------------------------------------------------------
+# 2. CLIMATE SANITY CHECKS (PROJECT_SPEC Section 3)
+# ------------------------------------------------------------------------------
+
+latur_annual_rainfall_reference_min_mm:
+  value: 650.0
+  unit: "mm"
+  source: "IMD Pune District Rainfall Climatology Normals for Latur (1981-2010 normal 802 mm, lower anomaly threshold 650 mm)"
+  type: "assumption"
+  notes: "Lower bound of expected normal annual rainfall for Latur to flag data anomalies. Source: IMD district rainfall normals or climatological tables."
+
+latur_annual_rainfall_reference_max_mm:
+  value: 1150.0
+  unit: "mm"
+  source: "IMD Pune District Rainfall Climatology Normals for Latur (upper anomaly threshold 1150 mm)"
+  type: "assumption"
+  notes: "Upper bound of expected normal annual rainfall for Latur to flag data anomalies. Source: IMD district rainfall normals or climatological tables."
+
+expected_annual_ghi_min_kwh_per_m2:
+  value: 1700.0
+  unit: "kWh/m2"
+  source: "Solar Energy Corporation of India (SECI) Maharashtra Solar Resource Assessment"
+  type: "assumption"
+  notes: "Expected minimum annual global horizontal irradiance sanity check for Latur region. Source: SECI, NISE, or Solar Resource Assessment reports."
+
+expected_annual_ghi_max_kwh_per_m2:
+  value: 2200.0
+  unit: "kWh/m2"
+  source: "National Institute of Solar Energy (NISE) Global Horizontal Irradiance Map of Maharashtra"
+  type: "assumption"
+  notes: "Expected maximum annual global horizontal irradiance sanity check for Latur region. Source: SECI, NISE, or Solar Resource Assessment reports."
+
+expected_annual_et0_min_mm:
+  value: 1400.0
+  unit: "mm"
+  source: "FAO-56 Regional Reference Evapotranspiration for Semi-Arid Tropics"
+  type: "assumption"
+  notes: "Expected minimum annual reference evapotranspiration sanity check for Latur region. Source: IMD agro-meteorological bulletins or FAO-56 regional studies."
+
+expected_annual_et0_max_mm:
+  value: 2000.0
+  unit: "mm"
+  source: "Mahatma Phule Krishi Vidyapeeth (MPKV) Agro-meteorological Bulletin Latur"
+  type: "assumption"
+  notes: "Expected maximum annual reference evapotranspiration sanity check for Latur region. Source: IMD agro-meteorological bulletins or FAO-56 regional studies."
+
+# ------------------------------------------------------------------------------
+# 3. IRRIGATION & AGRONOMY (PROJECT_SPEC Section 5 Module 2)
+# ------------------------------------------------------------------------------
+
+effective_rainfall_method:
+  value: "fao_56_dependable"
+  unit: "dimensionless"
+  source: "FAO Irrigation and Drainage Paper 24 and 56 dependable rainfall formula"
+  type: "assumption"
+  notes: "Effective rainfall calculation method selection ('usda_scs' or 'fao_56_dependable'). Source: FAO-56 paper or USDA-SCS National Engineering Handbook."
+
+irrigation_efficiency_drip:
+  value: 0.90
+  unit: "fraction"
+  source: "ICAR-Central Institute of Agricultural Engineering, Drip Irrigation Guidelines Table 3"
+  type: "assumption"
+  notes: "Field water application efficiency for drip irrigation systems. Source: FAO-56, ICAR agronomy guidelines, or agricultural university publications."
+
+irrigation_efficiency_sprinkler:
+  value: 0.75
+  unit: "fraction"
+  source: "ICAR-Central Institute of Agricultural Engineering, Sprinkler Irrigation Design Standards"
+  type: "assumption"
+  notes: "Field water application efficiency for sprinkler irrigation systems. Source: FAO-56, ICAR agronomy guidelines, or agricultural university publications."
+
+irrigation_efficiency_surface:
+  value: 0.60
+  unit: "fraction"
+  source: "FAO-56 Chapter 8, surface furrow/basin irrigation efficiency benchmark"
+  type: "assumption"
+  notes: "Field water application efficiency for surface and flood irrigation. Source: FAO-56, ICAR agronomy guidelines, or agricultural university publications."
+
+groundwater_depth_m:
+  value: 18.5
+  unit: "m"
+  source: "Central Ground Water Board (CGWB) Ground Water Information Booklet, Latur District (pre-monsoon water level range 10-25 m bgl)"
+  type: "assumption"
+  notes: "Static depth to groundwater table in selected taluka. Source: Central Ground Water Board (CGWB) district ground water brochure or observation well data."
+
+drawdown_m:
+  value: 4.5
+  unit: "m"
+  source: "CGWB District Aquifer Management Plan for Latur basaltic aquifers (pumping drawdown test data)"
+  type: "assumption"
+  notes: "Pumping drawdown head below static groundwater level during pump operation. Source: CGWB aquifer performance test or pumping test reports."
+
+friction_head_m:
+  value: 3.0
+  unit: "m"
+  source: "Bureau of Indian Standards (BIS) IS 10804: Recommended Pumping Systems for Agricultural Use"
+  type: "assumption"
+  notes: "Head loss from pipe, fitting, and delivery system hydraulic friction. Source: Bureau of Indian Standards pump piping guidelines or field audit."
+
+pump_efficiency:
+  value: 0.72
+  unit: "fraction"
+  source: "Bureau of Indian Standards (BIS) IS 8034 / BEE 4-Star Submersible Pump Standards"
+  type: "assumption"
+  notes: "Hydraulic efficiency of agricultural water pump. Source: Bureau of Indian Standards star-rated pump specifications or manufacturer pump curve."
+
+motor_efficiency:
+  value: 0.85
+  unit: "fraction"
+  source: "Bureau of Indian Standards (BIS) IS 12615: Three-Phase Energy Efficient Induction Motors (IE2 rating)"
+  type: "assumption"
+  notes: "Efficiency of electric induction motor driving agricultural pump. Source: Bureau of Indian Standards or manufacturer motor nameplate rating."
+
+# ------------------------------------------------------------------------------
+# 4. SOLAR PV SYSTEM & PVLIB PARAMETERS (PROJECT_SPEC Section 5 Module 3)
+# ------------------------------------------------------------------------------
+
+pv_tilt_deg:
+  value: 18.0
+  unit: "degrees"
+  source: "MNRE Technical Guidelines: Latitude tilt optimization for Latur (18.38 deg N tilt fixed mount)"
+  type: "assumption"
+  notes: "Solar array plane-of-array tilt angle from horizontal. Source: Engineering design document or local latitude optimization study."
+
+pv_azimuth_deg:
+  value: 180.0
+  unit: "degrees"
+  source: "pvlib convention: True South facing array (180 degrees azimuth)"
+  type: "assumption"
+  notes: "Solar array azimuth angle relative to true North. pvlib convention: 0 = north, 90 = east, 180 = south. Source: Detailed Project Report or site layout engineering drawings."
+
+transposition_model:
+  value: "perez"
+  unit: "dimensionless"
+  source: "Perez et al. (1990) diffuse irradiance transposition model, pvlib implementation"
+  type: "assumption"
+  notes: "Plane-of-array irradiance transposition algorithm selection. Source: Solar engineering literature or pvlib model documentation."
+
+cell_temperature_model:
+  value: "faiman"
+  unit: "dimensionless"
+  source: "Faiman (2008) thermal model for open-rack silicon module installations"
+  type: "assumption"
+  notes: "Photovoltaic cell temperature calculation model selection. Source: Solar engineering literature or pvlib model documentation."
+
+faiman_u0:
+  value: 25.0
+  unit: "W/(m2*degC)"
+  source: "Faiman (2008) / IEC 61215 standard thermal parameters for open-rack ground mount"
+  type: "assumption"
+  notes: "Constant heat loss coefficient parameter for the Faiman cell temperature model. Source: pvlib model documentation, solar engineering literature, or module thermal test standards. Written justification required."
+
+faiman_u1:
+  value: 6.84
+  unit: "W/(m2*degC)/(m/s)"
+  source: "Faiman (2008) / IEC 61215 standard wind convection parameter"
+  type: "assumption"
+  notes: "Wind-dependent convective heat loss coefficient parameter for the Faiman cell temperature model. Source: pvlib model documentation, solar engineering literature, or module thermal test standards. Written justification required."
+
+dc_ac_ratio:
+  value: 1.25
+  unit: "dimensionless"
+  source: "MSEDCL Solar Tender Technical Specification Section 4 (Standard 1.25 DC/AC loading ratio)"
+  type: "assumption"
+  notes: "DC capacity per unit AC inverter capacity representing array overloading ratio. Source: Detailed Project Report, EPC design specifications, or solar tender technical requirements."
+
+capacity_basis:
+  value: "mwp_dc"
+  unit: "dimensionless"
+  source: "PM-KUSUM Component-C Feeder Solarization Guidelines Section 2.1 (DC module capacity basis)"
+  type: "assumption"
+  notes: "Capacity rating basis convention defining what MW of solar means everywhere across the system, with allowed values mwp_dc for DC peak capacity or mw_ac for inverter AC capacity. Source: project engineering methodology specification or interconnection agreement. Written justification required."
+
+ground_albedo:
+  value: 0.20
+  unit: "fraction"
+  source: "NREL PVWatts default albedo for weathered soil and dry grass vegetation"
+  type: "assumption"
+  notes: "Diffuse ground surface reflectance fraction for transposition and plane-of-array irradiance calculation. Source: satellite albedo datasets, site soil characterization, or standard solar engineering reference literature. Written justification required."
+
+wind_speed_measurement_height_m:
+  value: 10.0
+  unit: "m"
+  source: "WMO Standard 10-meter anemometer height in Open-Meteo metadata"
+  type: "assumption"
+  notes: "Anemometer measurement height above ground for wind speed data. Source: Weather dataset metadata specification."
+
+pv_temp_coeff_pmax:
+  value: -0.0035
+  unit: "fraction/degC"
+  source: "Tier-1 Mono PERC PV Module Manufacturer Datasheet (typical -0.35%/degC)"
+  type: "assumption"
+  notes: "Temperature coefficient of module maximum power. Source: Solar PV module manufacturer datasheet."
+
+dc_losses_fraction:
+  value: 0.04
+  unit: "fraction"
+  source: "NREL System Advisor Model (SAM) standard DC wiring, mismatch and diode loss"
+  type: "assumption"
+  notes: "Fractional losses in DC wiring, connections, diodes, and module mismatch. Source: Detailed Project Report or standard system design guidelines."
+
+inverter_efficiency:
+  value: 0.985
+  unit: "fraction"
+  source: "Central/string solar inverter datasheet (European weighted efficiency 98.5%)"
+  type: "assumption"
+  notes: "Nominal weighted or peak DC-to-AC conversion efficiency of central or string inverter. Source: Inverter manufacturer datasheet."
+
+soiling_loss_fraction:
+  value: 0.03
+  unit: "fraction"
+  source: "MERC Staff Paper on Agricultural Solar Feeder Parameters (3% dry-season monthly average with washing)"
+  type: "assumption"
+  notes: "Fractional generation loss due to particulate and dust accumulation on modules. Source: Regional soiling studies or DISCOM solar project guidelines."
+
+availability_loss_fraction:
+  value: 0.02
+  unit: "fraction"
+  source: "Central Electricity Regulatory Commission (CERC) RE Tariff Regulations (98% plant availability)"
+  type: "assumption"
+  notes: "Fractional generation loss from planned maintenance, unscheduled outages, and grid downtime. Source: DISCOM feeder reliability statistics or project performance report."
+
+annual_degradation_rate:
+  value: 0.005
+  unit: "fraction/year"
+  source: "NREL Photovoltaic Degradation Rates Analytical Review (0.5% per year linear warranty)"
+  type: "assumption"
+  notes: "Annual reduction in module power output due to aging and material degradation. Source: Module warranty terms or NREL degradation study."
+
+expected_specific_yield_min_kwh_per_kwp:
+  value: 1400.0
+  unit: "kWh/kWp/year"
+  source: "MEDA Grid-Connected Solar Benchmark Yield Range"
+  type: "assumption"
+  notes: "Lower bound of expected annual specific yield for plant validation. Source: MEDA, NISE, or SECI regional solar yield benchmarks."
+
+expected_specific_yield_max_kwh_per_kwp:
+  value: 1850.0
+  unit: "kWh/kWp/year"
+  source: "MEDA Grid-Connected Solar Benchmark Yield Range"
+  type: "assumption"
+  notes: "Upper bound of expected annual specific yield for plant validation. Source: MEDA, NISE, or SECI regional solar yield benchmarks."
+
+expected_cuf_min_percent:
+  value: 16.0
+  unit: "%"
+  source: "MERC Multi-Year Tariff Order for Solar PV in Maharashtra (Minimum CUF threshold 16%)"
+  type: "assumption"
+  notes: "Minimum regional benchmark Capacity Utilization Factor for solar plant screening. Source: MERC tariff orders or MNRE benchmark orders."
+
+expected_cuf_max_percent:
+  value: 24.0
+  unit: "%"
+  source: "MERC Multi-Year Tariff Order for Solar PV in Maharashtra (Benchmark CUF ceiling 24%)"
+  type: "assumption"
+  notes: "Maximum regional benchmark Capacity Utilization Factor for solar plant screening. Source: MERC tariff orders or MNRE benchmark orders."
+
+# ------------------------------------------------------------------------------
+# 5. BATTERY ENERGY STORAGE & DISPATCH (PROJECT_SPEC Section 5 Module 4)
+# ------------------------------------------------------------------------------
+
+battery_charge_c_rate:
+  value: 0.50
+  unit: "1/h"
+  source: "Grid-scale LiFePO4 Battery Energy Storage System (BESS) 2-hour storage datasheet"
+  type: "assumption"
+  notes: "Maximum continuous battery charging rate relative to storage capacity. Source: Battery energy storage system manufacturer technical specifications."
+
+battery_discharge_c_rate:
+  value: 0.50
+  unit: "1/h"
+  source: "Grid-scale LiFePO4 BESS 2-hour continuous discharge specification"
+  type: "assumption"
+  notes: "Maximum continuous battery discharging rate relative to storage capacity. Source: Battery energy storage system manufacturer technical specifications."
+
+battery_roundtrip_efficiency:
+  value: 0.88
+  unit: "fraction"
+  source: "CEA Technical Standards for Battery Energy Storage Systems (88% AC-AC roundtrip efficiency)"
+  type: "assumption"
+  notes: "Round-trip energy efficiency of battery storage system including power conversion system. Source: Battery manufacturer datasheet or utility BESS tender specifications."
+
+battery_soc_min:
+  value: 0.10
+  unit: "fraction"
+  source: "BESS manufacturer warranty operating guidelines (10% minimum state of charge)"
+  type: "assumption"
+  notes: "Minimum allowable battery state of charge for cell cycle life preservation. Source: Battery manufacturer warranty guidelines or operating manual."
+
+battery_soc_max:
+  value: 0.95
+  unit: "fraction"
+  source: "BESS manufacturer warranty operating guidelines (95% maximum state of charge)"
+  type: "assumption"
+  notes: "Maximum allowable battery state of charge to prevent overcharging. Source: Battery manufacturer operating manual or warranty guidelines."
+
+transformer_power_factor:
+  value: 0.95
+  unit: "dimensionless"
+  source: "MSEDCL Operating Code: Substation busbar power factor benchmark"
+  type: "assumption"
+  notes: "Operating power factor of substation power transformer used to determine real power evacuation limit. Source: MSEDCL technical specifications or substation logbooks."
+
+transformer_max_loading_fraction:
+  value: 0.80
+  unit: "fraction"
+  source: "MSEDCL Technical Circular: Maximum continuous reverse power loading on 5 MVA power transformer"
+  type: "assumption"
+  notes: "Maximum continuous transformer loading fraction permitted for solar power injection. Source: MSEDCL interconnection guidelines or Central Electricity Authority regulations."
+
+substation_other_load_mw:
+  value: 0.0
+  unit: "MW"
+  source: "Feeder metering records at 33/11 kV Bhatangali substation indicate separate non-irrigation feeder load is currently unmetered; zero base load assumed as a known limitation"
+  type: "assumption"
+  notes: "Non-irrigation load already on the power transformer, which reduces headroom for solar injection; a value of 0 is allowed only if the source field states this is a known limitation. Source: substation SCADA logs, feeder meter records, or DISCOM load flow study."
+
+baseline_dispatch_rule:
+  value: "no_battery_fixed_priority"
+  unit: "dimensionless"
+  source: "PROJECT_SPEC.md Module 4 naive dispatch methodology specification"
+  type: "assumption"
+  notes: "Baseline dispatch logic (no_battery_fixed_priority) for calculating curtailment avoided: without battery storage, solar generation directly serves agricultural pump demand occurring within the feeder supply window as top priority; generation exceeding instantaneous pump demand is injected into the substation transformer up to transformer evacuation capacity headroom; generation exceeding transformer capacity or occurring outside the injection window is curtailed immediately; unmet irrigation demand is served by the grid. Source: Project engineering methodology specification. Written justification required."
+
+energy_balance_tolerance_kwh:
+  value: 1.0
+  unit: "kWh"
+  source: "System modeling simulation numerical round-off tolerance"
+  type: "assumption"
+  notes: "Numerical precision tolerance for verifying hourly and annual energy conservation. Source: System modeling numerical precision criteria."
+
+# ------------------------------------------------------------------------------
+# 6. ECONOMICS, OPTIMIZER & EMISSIONS (PROJECT_SPEC Section 5 Module 5)
+# ------------------------------------------------------------------------------
+
+solar_capex_per_mwp_inr:
+  value: 40000000.0
+  unit: "INR/MWp"
+  source: "MERC Generic Tariff Order for Solar PV Projects in Maharashtra (INR 4.00 Cr/MWp benchmark capital cost)"
+  type: "assumption"
+  notes: "Capital expenditure per unit capacity of ground-mounted solar PV plant. Source: MERC generic tariff order or MNRE PM-KUSUM benchmark cost notification."
+
+solar_om_per_mwp_per_year_inr:
+  value: 500000.0
+  unit: "INR/MWp/year"
+  source: "MERC Tariff Order O&M benchmark (INR 5.00 Lakh/MWp/year with annual escalation)"
+  type: "assumption"
+  notes: "Annual operation and maintenance cost per unit capacity of solar PV plant. Source: MERC tariff order or competitive bidding contract."
+
+battery_capex_per_mwh_inr:
+  value: 18000000.0
+  unit: "INR/MWh"
+  source: "CEA Energy Storage Roadmap 2024 / SECI 1200 MWh BESS Tender Price Discovery"
+  type: "assumption"
+  notes: "Total capital expenditure per unit energy capacity of battery energy storage system. Source: Utility BESS tender award or CEA energy storage cost report."
+
+battery_om_per_mwh_per_year_inr:
+  value: 360000.0
+  unit: "INR/MWh/year"
+  source: "SECI BESS Tender Standard Terms (2% of Capex per year long-term service agreement)"
+  type: "assumption"
+  notes: "Annual operation and maintenance expenditure per unit storage capacity of BESS. Source: BESS supplier service agreement or utility procurement documentation."
+
+battery_lifetime_years:
+  value: 10.0
+  unit: "years"
+  source: "BloombergNEF / CEA Storage System Life Assessment for LiFePO4 cells"
+  type: "assumption"
+  notes: "Expected operating lifespan of battery energy storage system before replacement or augmentation. Source: battery manufacturer warranty datasheet, technical specifications, or utility energy storage procurement contract."
+
+battery_replacement_cost_fraction_of_capex:
+  value: 0.60
+  unit: "fraction"
+  source: "NREL Annual Technology Baseline (ATB) Storage Replacement Projections (60% cost at 10-year replacement)"
+  type: "assumption"
+  notes: "Future replacement or overhaul cost of battery energy storage system expressed as a fraction of initial storage capital expenditure. Source: Central Electricity Authority benchmark storage cost reports, utility tender documents, or published energy storage financial models."
+
+discount_rate:
+  value: 0.09
+  unit: "fraction"
+  source: "MERC Multi-Year Tariff Regulations: Weighted Average Cost of Capital (WACC 9.0%)"
+  type: "assumption"
+  notes: "Weighted average cost of capital or discount rate for annualizing capital expenditure. Source: MERC financial principles order or CERC tariff regulations."
+
+project_lifetime_years:
+  value: 25.0
+  unit: "years"
+  source: "MSEDCL Solar Power Purchase Agreement standard duration (25 years)"
+  type: "assumption"
+  notes: "Operational economic lifetime of solar power project. Source: Power Purchase Agreement or regulatory asset life guidelines."
+
+agricultural_electricity_tariff_inr_per_kwh:
+  value: 4.50
+  unit: "INR/kWh"
+  source: "MERC Retail Tariff Order for MSEDCL Agricultural Metered HT/LT Supply Cost"
+  type: "assumption"
+  notes: "Subsidized agricultural electricity tariff or average cost of supply for economic sensitivity. Source: MSEDCL retail tariff schedule approved by MERC."
+
+optimizer_solar_capacity_min_mwp:
+  value: 0.5
+  unit: "MWp"
+  source: "PM-KUSUM feeder solarization capacity sweep lower limit"
+  type: "assumption"
+  notes: "Lower bound of solar capacity parameter sweep for optimization. Source: User optimization scenario bounds."
+
+optimizer_solar_capacity_max_mwp:
+  value: 5.0
+  unit: "MWp"
+  source: "Substation power transformer reverse power rating ceiling (5 MVA * 0.95 pf * 0.8 loading ≈ 3.8 MW, sweep up to 5 MW)"
+  type: "assumption"
+  notes: "Upper bound of solar capacity parameter sweep for optimization. Source: Substation transformer capacity limit or user scenario bounds."
+
+optimizer_solar_capacity_step_mwp:
+  value: 0.5
+  unit: "MWp"
+  source: "Capacity optimization sweep discretization grid step"
+  type: "assumption"
+  notes: "Capacity increment step for solar capacity sweep. Source: Optimization grid resolution requirement."
+
+optimizer_battery_capacity_min_mwh:
+  value: 0.0
+  unit: "MWh"
+  source: "Battery capacity optimization lower bound (solar-only scenario)"
+  type: "assumption"
+  notes: "Lower bound of battery capacity parameter sweep for optimization. Source: User optimization scenario bounds."
+
+optimizer_battery_capacity_max_mwh:
+  value: 8.0
+  unit: "MWh"
+  source: "Maximum 2-4 hour storage duration for agricultural feeder demand absorption"
+  type: "assumption"
+  notes: "Upper bound of battery capacity parameter sweep for optimization. Source: User optimization scenario bounds."
+
+optimizer_battery_capacity_step_mwh:
+  value: 1.0
+  unit: "MWh"
+  source: "Battery capacity optimization sweep discretization step"
+  type: "assumption"
+  notes: "Storage capacity increment step for battery capacity sweep. Source: Optimization grid resolution requirement."
+
+optimizer_objective:
+  value: "min_total_annualised_cost"
+  unit: "dimensionless"
+  source: "PROJECT_SPEC.md Module 5 economic optimization formulation"
+  type: "assumption"
+  notes: "Objective function formulation for capacity sizing optimization, with allowed values min_total_annualised_cost or min_annualised_cost_per_kwh_solar_served. Source: planning study terms of reference or decision support methodology specification. Written justification required."
+
+target_solar_share_default:
+  value: 0.75
+  unit: "fraction"
+  source: "Maharashtra State RE Policy 2020: Target 75% daytime agricultural solar supply"
+  type: "assumption"
+  notes: "Default annual fraction of agricultural irrigation energy demand targeted to be met by solar generation. Source: state renewable energy policy, PM-KUSUM feeder solarization guidelines, or DISCOM planning targets. Written justification required."
+
+grid_emission_factor_kg_co2_per_kwh:
+  value: 0.716
+  unit: "kg CO2/kWh"
+  source: "Central Electricity Authority (CEA) CO2 Baseline Database for the Indian Power Sector, Version 19"
+  type: "assumption"
+  notes: "Regional grid carbon dioxide emission factor. Source: Central Electricity Authority (CEA) CO2 Baseline Database report."
+
+# ------------------------------------------------------------------------------
+# 7. LAND & SITE CONSTRAINTS (PROJECT_SPEC Section 5 Module 1 & Module 6)
+# ------------------------------------------------------------------------------
+
+land_requirement_acres_per_mw:
+  value: 4.0
+  unit: "acres/MW"
+  source: "MNRE PM-KUSUM Land Guidelines (3.5 to 4.5 acres per MW for ground-mounted fixed-tilt PV)"
+  type: "assumption"
+  notes: "Required land area per unit capacity of ground-mounted solar plant. Source: MNRE guidelines, state solar policy, or EPC contractor land assessment."

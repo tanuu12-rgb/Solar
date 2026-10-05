@@ -1,0 +1,6 @@
+crop,planting_date,l_ini,l_dev,l_mid,l_end,kc_ini,kc_mid,kc_end,source
+Soybean,06-25,20,30,60,25,0.40,1.15,0.50,FAO-56 Irrigation and Drainage Paper 56 Tables 11 and 12
+Gram,10-15,20,30,40,30,0.40,1.00,0.35,FAO-56 Irrigation and Drainage Paper 56 Tables 11 and 12
+Sugarcane,01-01,35,60,180,90,0.40,1.25,0.75,FAO-56 Irrigation and Drainage Paper 56 Tables 11 and 12
+Tur,06-20,25,40,70,35,0.40,1.10,0.55,FAO-56 Irrigation and Drainage Paper 56 Tables 11 and 12
+Wheat,11-15,20,30,40,30,0.40,1.15,0.35,FAO-56 Irrigation and Drainage Paper 56 Tables 11 and 12

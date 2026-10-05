@@ -1,0 +1,89 @@
+# ==============================================================================
+# SMART FEEDER SOLARIZATION PLANNING AND DECISION SUPPORT SYSTEM (LATUR)
+# config/rules.yaml
+#
+# RULE (PROJECT_SPEC Section 5 Module 6):
+# Rules live in this file with:
+#   id, description, parameter, operator, threshold, unit, source, severity (blocking/warning), notes
+# ==============================================================================
+
+rules:
+  - id: "RULE_PLANT_CAPACITY_MIN"
+    description: "Proposed solar plant capacity must be greater than or equal to the minimum allowable capacity under PM-KUSUM Component C."
+    parameter: "solar_plant_mw"
+    operator: ">="
+    threshold: 0.5
+    unit: "MW"
+    source: "MNRE PM-KUSUM Scheme Component-C Implementation Guidelines Section 2.1"
+    severity: "blocking"
+    notes: "Minimum plant capacity benchmark for feeder solarization under PM-KUSUM Component C."
+
+  - id: "RULE_PLANT_CAPACITY_MAX"
+    description: "Proposed solar plant capacity must not exceed the maximum allowable capacity under PM-KUSUM Component C."
+    parameter: "solar_plant_mw"
+    operator: "<="
+    threshold: 5.0
+    unit: "MW"
+    source: "MSEDCL Letter CE(PP)/LM/AgLM/KUSUM-C/24355 dated 06.08.2024"
+    severity: "blocking"
+    notes: "Maximum plant capacity permitted for connection to 33/11 kV rural substations under MSKVY / KUSUM-C."
+
+  - id: "RULE_SUBSTATION_DISTANCE_MAX"
+    description: "Distance between proposed solar plant site and 33/11 kV substation must not exceed maximum interconnection limit."
+    parameter: "distance_to_substation_km"
+    operator: "<="
+    threshold: 5.0
+    unit: "km"
+    source: "MNRE PM-KUSUM Feeder Solarization Guidelines Section 3.2"
+    severity: "blocking"
+    notes: "Substation radius limit within 5 km to minimize 11 kV line evacuation loss and voltage drop."
+
+  - id: "RULE_LAND_AVAILABILITY"
+    description: "Available candidate site land must be greater than or equal to required land area for the proposed capacity."
+    parameter: "candidate_land_ratio"
+    operator: ">="
+    threshold: 1.0
+    unit: "ratio"
+    source: "Engineering Feasibility Requirement: Available land must be at least 100% of required land area"
+    severity: "blocking"
+    notes: "Ratio of available land to required land (available_acres / (solar_plant_mw * land_requirement_acres_per_mw)) must be >= 1.0."
+
+  - id: "RULE_TRANSFORMER_CAPACITY_RATIO"
+    description: "Proposed solar plant capacity must not exceed the allowable injection limit fraction of the power transformer rating."
+    parameter: "transformer_loading_ratio"
+    operator: "<="
+    threshold: 0.80
+    unit: "ratio"
+    source: "MSEDCL Technical Standard: Solar injection capacity capped at 80% of power transformer rated MVA capacity"
+    severity: "blocking"
+    notes: "Ratio of solar_plant_mw to (pt_capacity_mva * power_factor) must be <= allowed threshold (0.80)."
+
+  - id: "RULE_SUPPLY_WINDOW_DURATION"
+    description: "Feeder agricultural power supply window duration must be exactly 8 hours per MSEDCL letter."
+    parameter: "window_duration_hours"
+    operator: "=="
+    threshold: 8.0
+    unit: "hours"
+    source: "MSEDCL Letter CE(PP)/LM/AgLM/KUSUM-C/24355 dated 06.08.2024"
+    severity: "blocking"
+    notes: "Supply window duration in feeder_schedule.csv must equal exactly 8.0 hours."
+
+  - id: "RULE_EVACUATION_VOLTAGE"
+    description: "Interconnection voltage level must match DISCOM standard for distributed solar feeder plants."
+    parameter: "evacuation_voltage_kv"
+    operator: "=="
+    threshold: 11.0
+    unit: "kV"
+    source: "MSEDCL Distribution Code: Distributed generation interconnection voltage at 11 kV busbar"
+    severity: "warning"
+    notes: "Standard agricultural feeder busbar voltage level is 11 kV."
+
+  - id: "RULE_PROJECT_COST_PER_MW_MAX"
+    description: "Total project capital expenditure per MW must not exceed maximum benchmark cost limit."
+    parameter: "solar_capex_per_mwp_inr"
+    operator: "<="
+    threshold: 45000000.0
+    unit: "INR/MWp"
+    source: "MERC Benchmark Capital Cost Cap for Decentralized Solar PV Projects (INR 4.50 Cr/MWp)"
+    severity: "warning"
+    notes: "Upper ceiling cap on solar capital cost for project financial viability screening."

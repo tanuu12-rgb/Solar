@@ -1,0 +1,4 @@
+district,taluka,substation,pt_capacity_mva,solar_plant_mw,feeder_name,feeder_type,window_start,window_end
+Latur,Latur,33/11 kV Bhatangali,5.0,2.5,11KV BHATANGALI,RURAL-LTSPP,10:00,18:00
+Latur,Latur,33/11 kV Bhatangali,5.0,2.5,11KV CHIKHALTHANA,RURAL-LTSPP,09:15,17:15
+Latur,Latur,33/11 kV Bhatangali,5.0,2.5,11KV BAMNI,RURAL-LTSPP,08:00,16:00
