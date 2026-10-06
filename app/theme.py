@@ -104,27 +104,123 @@ p, span, label, div {
     max-width: 1440px;
 }
 
-/* Sidebar Custom Styling */
+/* Sidebar Custom Styling & Zero Gap Spacing */
 section[data-testid="stSidebar"] {
     background-color: rgba(10, 15, 29, 0.96) !important;
     border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     backdrop-filter: blur(20px) !important;
 }
 
-section[data-testid="stSidebar"] .block-container {
-    padding-top: 1.4rem;
-    padding-left: 1.2rem;
-    padding-right: 1.2rem;
+[data-testid="stSidebarHeader"] {
+    padding: 0.6rem 0.8rem 0 0.8rem !important;
+    margin: 0 !important;
+    min-height: unset !important;
+    background: transparent !important;
+}
+
+[data-testid="stSidebarHeader"] > div {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+[data-testid="stSidebarHeader"] img {
+    height: 44px !important;
+    max-height: 44px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    filter: drop-shadow(0 4px 14px rgba(245, 158, 11, 0.35)) !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stSidebarContent"] {
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0.4rem 0.6rem !important;
+    gap: 0 !important;
+}
+
+section[data-testid="stSidebar"] .block-container,
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="element-container"],
+section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+    gap: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Zero Gap Compact Data System Online Card */
+.sidebar-system-card {
+    background: rgba(16, 185, 129, 0.08) !important;
+    border: 1px solid rgba(16, 185, 129, 0.25) !important;
+    border-radius: 10px !important;
+    padding: 8px 12px !important;
+    margin: 2px 0 4px 0 !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.sidebar-system-top {
+    color: #34D399;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sidebar-live-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: #10B981;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #10B981;
+    animation: neonPulse 2s infinite;
+}
+
+.sidebar-system-card p {
+    color: #CBD5E1 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    margin: 3px 0 0 !important;
+}
+
+/* Sidebar Navigation compact list */
+section[data-testid="stSidebar"] div[data-testid="stSidebarNav"] {
+    padding: 0 !important;
+    margin: 0 !important;
+    flex: none !important;
+}
+
+section[data-testid="stSidebar"] div[data-testid="stSidebarNavItems"],
+section[data-testid="stSidebar"] ul[data-testid="stSidebarNavItems"] {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 2px !important;
 }
 
 [data-testid="stSidebarNav"] a {
-    border-radius: 10px !important;
-    margin: 3px 0 !important;
-    padding: 8px 14px !important;
+    border-radius: 9px !important;
+    margin: 1px 0 !important;
+    padding: 6px 12px !important;
     color: #94A3B8 !important;
     font-weight: 600 !important;
-    font-size: 13.5px !important;
+    font-size: 13px !important;
     transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Rename 'main' to '☀️ Overview' in sidebar navigation */
+[data-testid="stSidebarNav"] ul li:first-child a span {
+    display: none !important;
+}
+[data-testid="stSidebarNav"] ul li:first-child a::after {
+    content: "☀️ Overview" !important;
+    font-weight: 700 !important;
+    color: inherit !important;
+    font-size: 13px !important;
 }
 
 [data-testid="stSidebarNav"] a:hover {
@@ -141,85 +237,7 @@ section[data-testid="stSidebar"] .block-container {
     box-shadow: inset 0 0 12px rgba(245, 158, 11, 0.08) !important;
 }
 
-/* Sidebar Brand Box */
-.sidebar-brand-box {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 6px 4px 18px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: 16px;
-}
 
-.sidebar-brand-logo {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%);
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    color: #FBBF24;
-    font-size: 22px;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-}
-
-.sidebar-brand-text strong {
-    display: block;
-    font-size: 19px;
-    font-weight: 800;
-    color: #FFFFFF;
-    line-height: 1.2;
-    font-family: 'Outfit', 'Noto Sans Devanagari', sans-serif;
-    background: linear-gradient(135deg, #FFFFFF 0%, #FBBF24 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.sidebar-brand-text span {
-    display: block;
-    font-size: 11px;
-    color: #94A3B8;
-    margin-top: 2px;
-    font-weight: 500;
-}
-
-.sidebar-workspace-tag {
-    color: #F59E0B;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 1.6px;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-}
-
-.sidebar-system-card {
-    background: rgba(16, 185, 129, 0.08);
-    border: 1px solid rgba(16, 185, 129, 0.25);
-    border-radius: 12px;
-    padding: 13px 15px;
-    margin: 16px 0;
-    backdrop-filter: blur(10px);
-}
-
-.sidebar-system-top {
-    color: #34D399;
-    font-size: 11.5px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.sidebar-live-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: #10B981;
-    border-radius: 50%;
-    box-shadow: 0 0 10px #10B981;
-    animation: neonPulse 2s infinite;
-}
 
 @keyframes neonPulse {
     0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
@@ -869,29 +887,23 @@ div[data-testid="stAlert"] {
 """
 
 
+LOGO_SVG_PATH = str(Path(__file__).parent / "static" / "logo.svg")
+ICON_SVG_PATH = str(Path(__file__).parent / "static" / "icon.svg")
+
+
 def apply_theme() -> None:
-    """Inject the global rich dark glassmorphic CSS and layout styles."""
+    """Inject the global rich dark glassmorphic CSS, native top logo, and layout styles."""
     st.markdown(URJA_RICH_THEME_CSS, unsafe_allow_html=True)
+    try:
+        st.logo(LOGO_SVG_PATH, icon_image=ICON_SVG_PATH)
+    except Exception:
+        pass
     render_sidebar_brand()
 
 
 def render_sidebar_brand() -> None:
-    """Render the sidebar branding and status module."""
+    """Render sidebar workspace indicator and data system status card."""
     with st.sidebar:
-        st.markdown(
-            f"""
-            <div class="sidebar-brand-box">
-                <div class="sidebar-brand-logo">☀️</div>
-                <div class="sidebar-brand-text">
-                    <strong>{APP_NAME}</strong>
-                    <span>Smart Feeder Solarization</span>
-                </div>
-            </div>
-            <div class="sidebar-workspace-tag">WORKSPACE • LATUR</div>
-            """,
-            unsafe_allow_html=True,
-        )
-
         st.markdown(
             """
             <div class="sidebar-system-card">
@@ -904,6 +916,7 @@ def render_sidebar_brand() -> None:
             """,
             unsafe_allow_html=True,
         )
+
 
 
 def render_urja_header(

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <defs>
+    <linearGradient id="sunGradIcon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="40%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#D97706" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="72" height="72" rx="20" fill="rgba(245, 158, 11, 0.15)" stroke="rgba(245, 158, 11, 0.4)" stroke-width="2" />
+  <circle cx="40" cy="40" r="24" fill="#F59E0B" opacity="0.3" />
+  <path d="M 40 18 L 45 27 L 55 22 L 55 33 L 65 35 L 60 45 L 67 51 L 57 56 L 58 66 L 48 64 L 43 72 L 36 66 L 27 70 L 27 60 L 17 58 L 22 48 L 15 42 L 25 37 L 24 27 L 34 29 Z" fill="url(#sunGradIcon)" />
+  <circle cx="40" cy="40" r="15" fill="#FBBF24" />
+  <circle cx="40" cy="40" r="11" fill="#F59E0B" />
+</svg>
